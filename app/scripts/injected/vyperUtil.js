@@ -242,6 +242,12 @@ function isEmptyArray(aValue) {
     return Array.isArray(aValue) && aValue.length === 0;
 }
 
+function isArrayOfBindingObjects(aValue) {
+    if(Array.isArray(aValue) && aValue.length > 0) {
+        return aValue[0].hasOwnProperty("model") && aValue[0].hasOwnProperty("path");
+    }
+}
+
 function getControlAllProperties(oControl) {
     if(!oControl ||
       !oControl.getMetadata ||
@@ -285,7 +291,7 @@ function isFunction (value) {
 
 // Returns if a value is an object
 function isObject (value) {
-    return value && typeof value === 'object';
+    return value && typeof value === 'object' && value.constructor === Object;
 }
 
 // Returns if a value is a boolean
@@ -361,7 +367,7 @@ function getControlBindingContextPath(oControl) {
     return null;
 }
 
-function isValidProperties(oProperty) {
+function isValidProperties(oProperty, oPropValue) {
     if(!oProperty || isEmptyObject(oProperty)) return false;
 
     var aValNames = aBlackListed.filter(function(propName) {
@@ -372,15 +378,17 @@ function isValidProperties(oProperty) {
 
     if(Object.values(oProperty).length <= 0) return false;
 
-    var oPropValue = Object.values(oProperty)[0];
-    if(!oPropValue) return false;
+    //var oPropValue = Object.values(oProperty)[0];
+
+    if(!oPropValue || oPropValue.getId) return false;
 
     return oPropValue &&
     !isBoolean(oPropValue) &&
     !isDate(oPropValue) &&
     !isSymbol(oPropValue) &&
     !isObject(oPropValue) &&
-    !isEmptyArray(oPropValue) &&
+    (!isEmptyArray(oPropValue) &&
+    isArrayOfBindingObjects(oPropValue)) &&
     !isError(oPropValue) &&
     !isFunction(oPropValue); 
   }
@@ -451,7 +459,7 @@ function addControlProperties(oControl, elemProperties) {
         const sPropValue = getControlProperty(oControl, sPropName);
         var oProperty = {};
         oProperty[sPropName] = sPropValue;
-        if(isValidProperties(oProperty)) {
+        if(isValidProperties(oProperty, sPropValue)) {
             elemProperties.push(oProperty);
         }
     }
@@ -470,7 +478,7 @@ function addControlAggregation(oControl, elemProperties) {
         const sPropValue = getAggregationProperty(oControl, sPropName);
         var oProperty = {};
         oProperty[sPropName] = sPropValue;
-        if(isValidProperties(oProperty)) {
+        if(isValidProperties(oProperty, sPropValue)) {
             elemProperties.push(oProperty);
         }
     }
@@ -489,7 +497,7 @@ function addAssociationProperty(oControl, elemProperties) {
         const sPropValue = getAssociationProperty(oControl, sPropName);
         var oProperty = {};
         oProperty[sPropName] = sPropValue;
-        if(isValidProperties(oProperty)) {
+        if(isValidProperties(oProperty, sPropValue)) {
             elemProperties.push(oProperty);
         }
     }
