@@ -244,7 +244,10 @@ function isEmptyArray(aValue) {
 
 function isArrayOfBindingObjects(aValue) {
     if(Array.isArray(aValue) && aValue.length > 0) {
-        return aValue[0].hasOwnProperty("model") && aValue[0].hasOwnProperty("path");
+        return (
+            (aValue[0].hasOwnProperty("model") && aValue[0].hasOwnProperty("path")) || 
+            (isString(aValue[0]) && !aValue[0].getId)
+            );
     }
 }
 
