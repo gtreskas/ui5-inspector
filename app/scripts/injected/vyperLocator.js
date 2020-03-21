@@ -523,36 +523,38 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
       return bPass;
     }
 
-      //debugger;
+              //debugger;
     for (var key in mProperties) {
       var value = mProperties[key];
-      if (value && Array.isArray(value)) {
-        value.map(function(locatorBindingData){
-          bPass = bPass && compareBindingPathAndModelProperty(key, locatorBindingData, oControl);
-        });
-      } else if (value && typeof value === "object") {
-        bPass = bPass && compareBindingPathAndModelProperty(key, value, oControl);
-      } else if (key === "bindingContextPath") {
-        var sPath = getControlBindingContextPath(oControl);
-        if (sPath && value) {
-          bPass = bPass && wildCardAndNormalCompare(value, sPath);
-        } else if (!sPath && (value !== undefined && value !== null)) {
-          bPass = false;
-        }
-      } else if (key === "viewName") {
-        bPass = bPass && isControlInViewName(oControl, value);
-      } else if (key === "viewId") {
-        bPass = bPass && isControlInViewId(oControl, value);
-      } else {
-        if (key === "id") {
-          var bIdProp = compareId(oControl, value);
-          bPass = bPass && bIdProp;
-        } else {
-          var bPropVal = compareProperty(oControl, key, value);
-          if (!bPropVal) bPropVal = compareAggregation(oControl, key, value);
-          if (!bPropVal) bPropVal = compareAssociation(oControl, key, value);
-          bPass = bPass && bPropVal;
-        }
+      if(key !== "domProperties"){
+          if (value && Array.isArray(value)) {
+              value.map(function(locatorBindingData){
+                  bPass = bPass && compareBindingPathAndModelProperty(key, locatorBindingData, oControl);
+              });
+          } else if (value && typeof value === "object") {
+              bPass = bPass && compareBindingPathAndModelProperty(key, value, oControl);
+          } else if (key === "bindingContextPath") {
+              var sPath = getControlBindingContextPath(oControl);
+              if (sPath && value) {
+                  bPass = bPass && wildCardAndNormalCompare(value, sPath);
+              } else if (!sPath && (value !== undefined && value !== null)) {
+                  bPass = false;
+              }
+          } else if (key === "viewName") {
+              bPass = bPass && isControlInViewName(oControl, value);
+          } else if (key === "viewId") {
+              bPass = bPass && isControlInViewId(oControl, value);
+          } else {
+              if (key === "id") {
+                  var bIdProp = compareId(oControl, value);
+                  bPass = bPass && bIdProp;
+              } else {
+                  var bPropVal = compareProperty(oControl, key, value);
+                  if (!bPropVal) bPropVal = compareAggregation(oControl, key, value);
+                  if (!bPropVal) bPropVal = compareAssociation(oControl, key, value);
+                  bPass = bPass && bPropVal;
+              }
+          }
       }
     }
     return bPass;
@@ -653,28 +655,19 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     }
     bPass = bPass && filterMetadata(elementProperties, oControl);
     if (!bPass) return bPass;
-    for (var key in elementProperties) {
-      var value = elementProperties[key];
-        //console.log("Key--->" + key + " Value--->" + value);
-      if (typeof value === "object" &&
-          elementProperties.mProperties &&
-          key === "mProperties") {
-            //if(oControl.getId() === "__box0")
-            //debugger;
-        bPass = bPass && compareToProperties(value, oControl);
-      } else if (typeof value === "object" &&
-      elementProperties.domProperties &&
-      key === "domProperties") {
-        var oNode = convertToDomElement(oControl);
-        bPass = bPass && compareToDomProperties(oNode, value);
+    if (elementProperties.mProperties && typeof elementProperties.mProperties === "object") {
+                          //if(oControl.getId() === "__box0")
+                          //debugger;
+        bPass = bPass && compareToProperties(elementProperties.mProperties, oControl);
+      } else if(elementProperties && typeof elementProperties === "object"
+      && !elementProperties.mProperties){
+          bPass = bPass && compareToProperties(elementProperties, oControl); 
       }
-    }
-    if (bPass) {
-        /*console.log("Element Property Control Type -->"
-        + oControl.getMetadata().getName()
-        + ", Id-->" + oControl.getId()
-        + ", bPass-->" + bPass);*/
-    }
+      
+      if (elementProperties.domProperties && typeof elementProperties.domProperties === "object") {
+        var oNode = convertToDomElement(oControl);
+        bPass = bPass && compareToDomProperties(oNode, elementProperties.domProperties);
+      } 
     return bPass;
   }
 
