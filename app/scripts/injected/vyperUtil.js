@@ -1,5 +1,57 @@
+// Aggregation or type of instanceof sap.m.ListItemBase,
+// Or of sap.ui.table.Row or sap.ui.core.Item or has aggregation binding
+// Ancestor check root aggregations : sap.tnt.NavigationList
+//sap.m.ComboBoxBase, sap.m.ListBase, sap.ui.table.Table, sap.m.MultiInput, sap.ui.unified.MenuItemBase, sap.ui.unified.Menu
+// check for aggregation/association binding
+// Descendant check for element with i18n, binding, dont us ids
+// If ancestor item
+// If descentant item
+// Use wildcards for bindingContextPath with guid
+// bindingingContext + etwas (bindingpath)
 
-    'use strict';
+
+// Take more in consideration (2)
+// No aggregagation -> check for check for element with i18n, binding (ignore Uxfc, prefer strings over numbers, and booleans : enabled, disabled ), ariaLabelledBy, viewName/Id
+// ids, viewId, binindContextPath, properties,ariaLabelledBy, check if generic --> pattern <metadata name> + number
+// create wildcards check --> * + difference
+// If searchField action --> use reuse methods
+
+
+// Non UI5
+// Get nodeName --> li,div, ...
+// Dont retrieve elements with no id, or elements with b or span
+// If parent, grand or grand-grand no id, take class or custom attributes
+// If nothing else found the take b and span elements
+// Define sequence of importance
+//   0:title,name  1: id, 2:custom, 3:class [name, style, data-help-id, generally *id*, role, key, title...] (dont accept attributes with name: data-/*focus*,*context*, menu*, drag*, click, mouse,change,keydown, keyup, attached, maxlengh, or with value: funtion, (), {}, =, ; )
+// 2 + system --> fill
+// --> id & *-id*  & [name | title ]  --> 1 is enough (first with star, then with $ and without after) --> if not unque continue with wildcard
+// --> other custom with restrictions --> 2 needs
+// --> css (class, style)
+// If id, concatinate and iterate [concat rules: _, ., [],/,\ ]
+// Iterate through attributes
+//document.querySelectorAll(*)
+// var iframe = document.getElementById("application-ServiceContract-create")
+//iframe.contentWindow.document.querySelectorAll('input[id*="btadminh_po_number_sold"]')
+//$$('iframe')[1].contentDocument.querySelectorAll('input[id*="btadminh_po_number_sold"]')
+/*
+<iframe id ='if1'>
+    <iframe id ='if2'>
+        <iframe id ='if3'>
+            <iframe id ='if4'>
+                <input type='hidden' id ='elementToBeFound'>
+            </iframe>
+        </iframe>
+    </iframe>
+</iframe>
+const elem = document.getElementById('if1').contentDocument
+.getElementById('if2').contentDocument
+.getElementById('if3').contentDocument
+.getElementById('if4').contentDocument
+.getElementById('elementToBeFound')
+*/
+
+'use strict';
 
     var jaroWinkDistance = require('./jaroWinBundle.js'); 
     var ui5All = require('./vyperLocator'); 
@@ -424,6 +476,42 @@ function retrieveDomProperties(oNode) {
 
 window.retrieveDomProperties = retrieveDomProperties;
 
+function isControlInViewId(oControl, sViewId) {
+    try {
+      // eslint-disable-next-line no-undef
+      if (!oControl || !sap.ui.core.Element || !sap.ui.core.mvc.View) {
+        return false;
+      }
+      if (oControl.getId && sViewId === oControl.getId() &&
+        // eslint-disable-next-line no-undef
+        oControl instanceof sap.ui.core.mvc.View) {
+        return true;
+      } else {
+        return isControlInViewId(oControl.getParent(), sViewId);
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function isControlInComponentId(oControl, sComponentId) {
+    try {
+      // eslint-disable-next-line no-undef
+      if (!oControl || !sap.ui.core.Element || !sap.ui.core.Component) {
+        return false;
+      }
+      if (oControl.getId && sComponentId === oControl.getId() &&
+        // eslint-disable-next-line no-undef
+        oControl instanceof sap.ui.core.UIComponent) {
+        return true;
+      } else {
+        return isControlInComponentId(oControl.getParent(), sComponentId);
+      }
+    } catch (error) {
+      return false;
+    }
+  }
+
 function addViewForControl(oControl, elemProperties) {
     // Get View name
     if(sap.ui.core.Element && sap.ui.core.mvc.View) {
@@ -433,13 +521,26 @@ function addViewForControl(oControl, elemProperties) {
         for (let index = 0; index < aViews.length; index++) {
             var oView = aViews[index];
             if(oView.getId() && oControl.getId() &&
-            oControl.getId().indexOf(oView.getId()) !== -1) {
+            isControlInViewId(oControl, oView.getId())) {
+               var aComponents = [].concat(sap.ui.core.Component.registry.filter(function (oElem) {
+                    return oElem instanceof sap.ui.core.UIComponent;
+                }));
+                for (let j = 0; j < aComponents.length; j++) {
+                    const oComponent = aComponents[j];
+                    if(isControlInComponentId(oView, oComponent.getId())) {
+                        elemProperties.push({
+                            'componentId': oComponent.getId()
+                        });
+                        break;
+                    }
+                }
                 elemProperties.push({
                     'viewId': oView.getId()
                 });
                 elemProperties.push({
                     'viewName': oView.getViewName()
                 });
+                return;
             }
         }
     }
@@ -516,26 +617,62 @@ window.retrieveBindingContextPath = retrieveBindingContextPath;
 function retrieverBindingPaths(oControl, sPropKey) {
     var aBindingInfos = [];
     var aBindingInfoParts = oControl.getBindingInfo(sPropKey).parts;
-    if(aBindingInfoParts && aBindingInfoParts.length > 0) {
-        //console.log("Binding length has property--------> "+ sPropKey+ ", " + aBindingInfoParts.length);
-        for (var i = 0; i < aBindingInfoParts.length; i++) {
-            var sModel = "";
-            //console.log("Binding parts path--------> "+ aBindingInfoParts[i].path);
-            if(!aBindingInfoParts[i].path) continue;
-            if(aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
-            aBindingInfos.push({
+    try {
+        if (aBindingInfoParts && aBindingInfoParts.length > 0) {
+            for (var i = 0; i < aBindingInfoParts.length; i++) {
+                var sModel = "";
+                if (!aBindingInfoParts[i].path) continue;
+                if (aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
+                aBindingInfos.push({
                 model: sModel,
-                path: aBindingInfoParts[i].path
-            });
+                path: aBindingInfoParts[i].path,
+                value: ""
+                });
+            }
+            if(oControl.getBinding && oControl.getBinding(sPropKey)) {
+                var oBinding = oControl.getBinding(sPropKey);
+                if(oBinding.getBindings && oBinding.getBindings() && 
+                    aBindingInfos && aBindingInfos.length > 1) {
+                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                    for (var i = 0; i < aBindings.length; i++) {
+                        for (var j = 0; j < aBindingInfos.length; j++) {
+                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                            if(aBindingInfos[j].path === aBindings[i].getPath()) {
+                                aBindingInfos[j].value = aBindings[i].getValue();
+                            }
+                        }
+                    }
+                } else if(aBindingInfos && aBindingInfos.length === 1 &&
+                    aBindingInfos[0].path === oBinding.getPath()) {
+                    aBindingInfos[0].value = oBinding.getValue();
+                }
+            }
+            } else {
+                var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
+                var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
+                if (sBindingDataStr) {
+                aBindingInfos.push({
+                    model: sBindingDataModelStr,
+                    path: sBindingDataStr,
+                    value: ""
+                });
+                if(oControl.getBinding && oControl.getBinding(sPropKey)) {
+                    var oBinding = oControl.getBinding(sPropKey);
+                    if(oBinding.getBindings && oBinding.getBindings() && 
+                    aBindingInfos && aBindingInfos.length > 1) {
+                        var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                        if(aBindings.length > 0 && aBindings[0].getPath() === sBindingDataStr) {
+                            aBindingInfos[0].value = aBindings[0].getValue();
+                        }
+                    } else if(aBindingInfos && aBindingInfos.length === 1 &&
+                        aBindingInfos[0].path === oBinding.getPath()) {
+                        aBindingInfos[0].value = oBinding.getValue();
+                    }
+                }
+            }
         }
-    } else {
-        var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
-        if(sBindingDataStr) {
-            aBindingInfos.push({
-                    model: "",
-                    path: sBindingDataStr
-            });
-        }
+    } catch (error) {
+        //Continue
     }
     return aBindingInfos;
 }
@@ -682,6 +819,13 @@ function retrieveUI5Properties(oControl) {
         'id': oControl.getId()
     });
     
+    // Add component name
+    /*
+    sap.ui.core.Component.registry.filter(function (oElem) {
+            return oElem instanceof sap.ui.core.UIComponent;
+        });
+        oView.getId().indexOf(comps[2].getId())
+    */
     // Get View name
     addViewForControl(oControl, elemProperties);
     // Get control properties
@@ -705,30 +849,194 @@ function retrieveControlType(oControl) {
 
 window.retrieveUI5Properties = retrieveUI5Properties;
 
-function generateAllControlSelector(sControlId) {
+function generateAllControlSelectorById(sControlId) {
+    var sapBody = document.getElementsByClassName('sapUiBody');
+    if(!sapBody || !sapBody[0]) {
+        throw new Error('No body found')
+    }
+    var oControl = sap.ui.getCore().byId(sControlId);
+    return generateAllControlSelector(oControl);
+}
+
+function generateAllControlSelector(oControl) {
     var elemUI5Properties = [];
     var domProperties = [];
     var elemBindingProperties = [];
     var elemBindingContextsPath = [];
     var elemControlType = [];
-    var sapBody = document.getElementsByClassName('sapUiBody');
-    if(!sapBody || !sapBody[0]) {
-        throw new Error('No body found')
+    if(!oControl) return null;
+    var oNode = document.getElementById(oControl.getId());
+    // Get all selectors properties
+    domProperties = retrieveDomProperties(oNode);
+    elemUI5Properties = retrieveUI5Properties(oControl);
+    elemBindingProperties = retrieveUI5BindingProperties(oControl);
+    elemBindingContextsPath = retrieveBindingContextPath(oControl); 
+    elemControlType =  retrieveControlType(oControl); 
+    var propsCollection = {
+        "domProperties": domProperties || [],
+        "ui5Properties": elemUI5Properties || [],
+        "bindingContextPath": elemBindingContextsPath || [],
+        "bindingPropertyPaths": elemBindingProperties || [],
+        "metadata": elemControlType || []
     }
-    var oNode = document.getElementById(sControlId);
-    var oControl = sap.ui.getCore().byId(sControlId);
-    if(oControl) {
-        // Get all selectors properties
-        domProperties = retrieveDomProperties(oNode);
-        elemUI5Properties = retrieveUI5Properties(oControl);
-        elemBindingProperties = retrieveUI5BindingProperties(oControl);
-        elemBindingContextsPath = retrieveBindingContextPath(oControl); 
-        elemControlType =  retrieveControlType(oControl); 
-    }
-    return [].concat(domProperties, elemUI5Properties, elemBindingProperties, elemBindingContextsPath, elemControlType);
+    return propsCollection;
 }
 
-window.generateAllControlSelector = generateAllControlSelector;
+function getAllElementProperties(sControlId) {
+    return generateAllControlSelectorById(sControlId);
+}
+
+window.getAllElementProperties = getAllElementProperties;
+
+function getValidParentControl(oControl) {
+    if (!oControl || !oControl.getId || !oControl.getId()) return null;
+    var oParentControl = null;
+    var domElem = document.getElementById(oControl.getId());
+    if (!domElem) return null;
+    var domParent = domElem.parentElement;
+    for (;;) {
+        if (!domParent) return null;
+        var nodeId = domParent.getAttribute("id");
+        if (nodeId) {
+        // eslint-disable-next-line no-undef
+        oParentControl = sap.ui.getCore().byId(nodeId);
+        if (oParentControl) {
+            /*console.log("Candidate Parent Property Control Type -->"
+            + oParentControl.getMetadata().getName()
+            + ", Id-->" + oParentControl.getId());*/
+            return oParentControl;
+        }
+        }
+        domParent = domParent.parentElement;
+    }
+}
+
+function findNextAncestor(oControl) {
+    if(oControl) {
+        return getValidParentControl(oControl);
+    }
+};
+
+function findNextAncestorByControlId(sControlId) {
+    var oControl = sap.ui.getCore().byId(sControlId);
+    return findNextAncestor(oControl);
+};
+
+function getNextAncestorProperties(sControlId) {
+    var oParentControl = findNextAncestorByControlId(sControlId);
+    return generateAllControlSelector(oParentControl);
+}
+
+window.getNextAncestorProperties = getNextAncestorProperties;
+
+function retrieveValidUI5ControlsSubElements(nodes, aCandidateControls) {
+    if (!nodes || nodes.length === 0) {
+        //console.log('no node html elements found');
+      return aCandidateControls;
+    }
+    Array.prototype.filter.call(nodes, function(node) {
+        //console.log("node -->" + node);
+      var nodeId = node.getAttribute("id");
+      if (!nodeId) {
+        var childNod = node.children;
+          //console.log("Number of child elements-->"+ childNod.length);
+        if (!childNod) return false;
+        Array.prototype.filter.call(childNod, function(chNode) {
+          var chNodeId = chNode.getAttribute("id");
+          if (chNodeId) {
+            // eslint-disable-next-line no-undef
+            var oControl = sap.ui.getCore().byId(chNodeId);
+            if (oControl) {
+                //console.log("Control pushed-->"+ oControl.getId());
+              aCandidateControls.push(oControl);
+            } else {
+                //console.log("Im in else iterate 1");
+              retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
+              return false;
+            }
+          } else {
+              //console.log("Im in else iterate 2");
+            retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
+            return false;
+          }
+        });
+      } else {
+        // eslint-disable-next-line no-undef
+        var oControl = sap.ui.getCore().byId(nodeId);
+        if (oControl) {
+            //console.log("Control pushed-->" + oControl.getId());
+            //console.log("Control pushed-->"+ oControl.getId());
+          aCandidateControls.push(oControl);
+        } else {
+            //console.log("Im in else iterate 3 -->" + node.children.length);
+          retrieveValidUI5ControlsSubElements(node.children, aCandidateControls);
+          return false;
+        }
+      }
+      return oControl;
+    });
+    return aCandidateControls;
+  }
+
+function getAllDescendantElementsProps(sControlId) {
+    var aAllChildrenNodes = document.getElementById(sControlId).children;
+    var aPropsForAllDescentants = [];
+    var aCandidateControls = [];
+    var aValidControls = [];
+    aValidControls = retrieveValidUI5ControlsSubElements(aAllChildrenNodes, aCandidateControls);
+    if (!aValidControls || aValidControls.length === 0) return null;
+    
+    for (let index = 0; index < aValidControls.length; index++) {
+        const oControl = aValidControls[index];
+        aPropsForAllDescentants.push({
+            "id": oControl.getId(),
+            "properties": generateAllControlSelector(oControl)
+        });
+    }
+    return aPropsForAllDescentants;
+}
+
+window.getAllDescendantElementsProps = getAllDescendantElementsProps;
+
+function findSiblingControls(oControl, oParentControl) {
+    var aValidControls = [];
+    var aCandidateControls = [];
+    if (!oControl || !oControl.getId || !oControl.getId()) return null;
+    if (!oParentControl.getId ||!oParentControl.getId()) return null;
+    var sParentId = oParentControl.getId();
+    var aAllSiblingNodes = document.getElementById(sParentId).children;
+    aValidControls = retrieveValidUI5ControlsSubElements(aAllSiblingNodes, aCandidateControls);
+    if (!aValidControls || aValidControls.length === 0) return null;
+    var oControlIndx = aValidControls.findIndex(function(element) {
+      return element.getId() === oControl.getId();
+    }); 
+    if (oControlIndx === -1) { throw new Error("Something is very wrong with prev/next control finder"); }
+    else {
+      aValidControls.splice(oControlIndx, 1);
+      return aValidControls;
+    }
+  }
+
+function getAllSiblingProperties(sControlId) {
+    var allSiblingsProps = [];
+    var allSblControls = [];
+    var oParentControl = findNextAncestorByControlId(sControlId);
+    var oControl = sap.ui.getCore().byId(sControlId);
+    if (oControl && oParentControl) {
+        allSblControls = findSiblingControls(oControl, oParentControl);
+    }
+    if (!allSblControls || allSblControls.length === 0) return null;
+    for (let index = 0; index < allSblControls.length; index++) {
+        const oCandControl = allSblControls[index];
+        allSiblingsProps.push({
+            "id": oCandControl.getId(),
+            "properties": generateAllControlSelector(oCandControl)
+        });
+    }
+    return allSiblingsProps;
+}
+
+window.getAllSiblingProperties = getAllSiblingProperties;
 
 // Add locator to test
 window.ui5All = ui5All;
