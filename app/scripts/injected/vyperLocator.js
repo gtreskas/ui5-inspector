@@ -234,29 +234,66 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
   function retrieverBindingPaths(oControl, sPropKey) {
     var aBindingInfos = [];
     var aBindingInfoParts = oControl.getBindingInfo(sPropKey).parts;
-    if (aBindingInfoParts && aBindingInfoParts.length > 0) {
-        //console.log("Binding length has property--------> "+ sPropKey+ ", " + aBindingInfoParts.length);
-      for (var i = 0; i < aBindingInfoParts.length; i++) {
-        var sModel = "";
-          //console.log("Binding parts path--------> "+ aBindingInfoParts[i].path);
-        if (!aBindingInfoParts[i].path) continue;
-        if (aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
-        aBindingInfos.push({
-          model: sModel,
-          path: aBindingInfoParts[i].path
-        });
-      }
-    } else {
-      var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
-      if (sBindingDataStr) {
-        aBindingInfos.push({
-          model: "",
-          path: sBindingDataStr
-        });
-      }
+    try {
+        if (aBindingInfoParts && aBindingInfoParts.length > 0) {
+            for (var i = 0; i < aBindingInfoParts.length; i++) {
+                var sModel = "";
+                if (!aBindingInfoParts[i].path) continue;
+                if (aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
+                aBindingInfos.push({
+                model: sModel,
+                path: aBindingInfoParts[i].path,
+                value: ""
+                });
+            }
+            if(oControl.getBinding && oControl.getBinding(sPropKey)) {
+                var oBinding = oControl.getBinding(sPropKey);
+                if(oBinding.getBindings && oBinding.getBindings() && 
+                    aBindingInfos && aBindingInfos.length > 1) {
+                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                    for (var i = 0; i < aBindings.length; i++) {
+                        for (var j = 0; j < aBindingInfos.length; j++) {
+                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                            if(aBindingInfos[j].path === aBindings[i].getPath()) {
+                                aBindingInfos[j].value = aBindings[i].getValue();
+                            }
+                        }
+                    }
+                } else if(aBindingInfos && aBindingInfos.length === 1 &&
+                    aBindingInfos[0].path === oBinding.getPath()) {
+                    aBindingInfos[0].value = oBinding.getValue();
+                }
+            }
+            } else {
+                var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
+                var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
+                if (sBindingDataStr) {
+                aBindingInfos.push({
+                    model: sBindingDataModelStr,
+                    path: sBindingDataStr,
+                    value: ""
+                });
+                if(oControl.getBinding && oControl.getBinding(sPropKey)) {
+                    var oBinding = oControl.getBinding(sPropKey);
+                    if(oBinding.getBindings && oBinding.getBindings() && 
+                    aBindingInfos && aBindingInfos.length > 1) {
+                        var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
+                        if(aBindings.length > 0 && aBindings[0].getPath() === sBindingDataStr) {
+                            aBindingInfos[0].value = aBindings[0].getValue();
+                        }
+                    } else if(aBindingInfos && aBindingInfos.length === 1 &&
+                        aBindingInfos[0].path === oBinding.getPath()) {
+                        aBindingInfos[0].value = oBinding.getValue();
+                    }
+                }
+            }
+        }
+    } catch (error) {
+        //Continue
     }
     return aBindingInfos;
-  }
+}
+
 
   function getBindDataForAggregation(oControl, sPropKey) {
     var aAggregation = getControlAllAggregations(oControl);
