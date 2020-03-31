@@ -38,6 +38,7 @@
     ],
     "web_accessible_resources": [
         "/scripts/injected/*.js",
+        "/scripts/injected/**/*.js",
         "/vendor/ToolsAPI.js"
     ]
 }
