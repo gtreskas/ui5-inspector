@@ -8,18 +8,13 @@
 // dont use: id, use: bindingContextPath (no guid elements) & bindingPropertyPath or i18n [add. viewName] (try it ui5All)
 // ------> bindingContextPath no other valid element besides guid, empty & boolean params (try it ui5All)  
 // ------> no valid bindingContextPath
-/////////////////////////////////PARALLEL///////////////////////////////////////////////////////////////////////////////////////////////
-// ---------> get ancestor and then get descentants, select base on ui5 property value (only where value != boolean?,'', null,undefined) (try it ui5All)
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ---------> get ancestor instanceof sap.m.ListItemBase... and then get descentants, select base on ui5 property value (only where value != boolean?,'', null,undefined) (try it ui5All)
 // ---------> not found unique descentant
-// ---------> PARALLEL
-// ---------> get descendants of the descendants select base on ui5 property value (only where value != '', null,undefined)
-// ---------> repeat as long as no descendants found
-// ---------> PARALLEL
-// ---------> get siblings of the descendants, try bindings,i18n & ui5 properties (only where value != '', null,undefined) (try it ui5All)
+// ---------> get descendants of the descendants (parallel) select base on ui5 property value (only where value != '', null,undefined)
+// ---------> repeat as long as no descendants found  try bindings,i18n & ui5 properties (only where value != '', null,undefined)
 // ---------> PARALLEL
 // ---------> get direct descendant (only where value != boolean?,'', null,undefined) (try it ui5All)
-// ---------> PARALLEL
-// ---------> get direct ancestor (try it ui5All) ----> not important
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // ---------> RESULT: no --> use index (try it ui5All --> check resulted id)
@@ -34,14 +29,11 @@
 // ------> PARALLEL
 // ------> if not valid check ui5 properties (try it ui5All) 
 // ------> PARALLEL
-// ------> check siblings
-// use: bindingPropertyPath or i18n [add. viewName], ui5 properties, otherwise use: id (check not generic) (try it ui5All)
+// ------> check siblings use: bindingPropertyPath or i18n [add. viewName], ui5 properties, otherwise use: id (check not generic) (try it ui5All)
 // ------> PARALLEL
-// ------> check descendant  
-// use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic) (try it ui5All)
+// ------> check descendant use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic) (try it ui5All)
 // ------> PARALLEL
-// ------> check ancestor
-// use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic) (try it ui5All)
+// ------> check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic) (try it ui5All)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DECISION OF PARALLEL: Depends on value of finding( bindingContextPath, i18n > id > properties)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -52,15 +44,16 @@
 // CASE 3 [ELSE]
 // instanceof sap.m.ComboBoxBase, sap.m.ListBase, sap.ui.table.Table, sap.m.MultiInput, sap.ui.unified.MenuItemBase, sap.ui.unified.Menu
 // use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic) (try it ui5All)
-// PARALLEL
 // not found
+// PARALLEL
 // Check ui5Properties (ignore booleans for this phase)
 // PARALLEL
-// if not found: check siblings
-// use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic) (try it ui5All)
+// if not found: check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic) (try it ui5All)
 // PARALLEL
 // if not found: check ancestor
 // use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic) (try it ui5All)
+// if not found: check descendant (aggregation elements)
+// no id, use: bindingContextPath (no guid elements) & bindingPropertyPath or i18n [add. viewName] (try it ui5All)
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 // DECISION OF PARALLEL: Depends on value of finding( bindingproperty > i18n > id > properties)
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -104,9 +97,6 @@ if (matches != null) {
     alert('number');
 }
 */
-
-var vyperUtil = require('../../utils/vyperUtil');
-var ui5All = require('../../utils/vyperLocator');
 sap.ui.require([
     "sap/m/ListItemBase",
     "sap/ui/table/Row",
@@ -119,19 +109,12 @@ sap.ui.require([
     "sap/ui/table/Table",
     "sap/m/MultiInput"
 ], function(ListItemBase, Row, Item, MenuItemBase, Menu, NavigationList, ComboBoxBase, ListBase, Table, MultiInput) {
+var vyperUtil = require('../../utils/vyperUtil');
+var evaluator = require('../../utils/selectorEvaluators');
 var ElementCentricStrategy = function() {
-    this.getKeyValue = function(oControlProps, key) {
-        if(oControlProps && key !== null && key !== undefined) {
-            for (let index = 0; index < oControlProps.length; index++) {
-                const prop = oControlProps[index];
-                if(prop && prop[key]){
-                    return prop[key];
-                }
-            }
-        }
-    }
 
     this.checkAggregationElement = function(oControl) {
+        if(!oControl) return false;
         return oControl instanceof ListItemBase ||
         oControl instanceof Row ||
         oControl instanceof Item ||
@@ -140,6 +123,7 @@ var ElementCentricStrategy = function() {
     }
 
     this.checkAggregation = function(oControl) {
+        if(!oControl) return false;
         return oControl instanceof NavigationList ||
         oControl instanceof ComboBoxBase ||
         oControl instanceof ListBase ||
@@ -149,38 +133,41 @@ var ElementCentricStrategy = function() {
 
     this.recursiveCheckDescendantOfAggregation = function(oControl) {
         if(this.checkAggregation(oControl)){
-            return false;
-        } else {
+            return null;
+        } else if(oControl){
             var oParentControl = vyperUtil.findNextAncestor(oControl);
             if(oParentControl && !this.checkAggregation(oParentControl)) {
                 // Get  next parent until finding aggregation element
                 return this.recursiveCheckDescendantOfAggregation(oParentControl);
             } else if(oParentControl && this.checkAggregation(oParentControl)) {
-                return true;
+                return oParentControl;
             } else {
-                return false;
+                return null;
             }
         }
+        return null;
     }
 
     this.recursiveCheckAncestorElemOrDesc = function(oControl) {
-        if(this.checkAggregation(oControl)) return false;
+        if(this.checkAggregation(oControl)) return null;
+        if(!oControl) return null;
         if(!this.checkAggregationElement(oControl)) {
             var oParentControl = vyperUtil.findNextAncestor(oControl);
             if(oParentControl && !this.checkAggregation(oParentControl)) {
                 // Get  next parent until finding aggregation element
                 return this.recursiveCheckAncestorElemOrDesc(oParentControl);
             } else {
-                return false;
+                return null;
             }
         } else {
-            return true;
+            return oControl;
         }
     }
 
     // CASE 1
     this.checkIfAggrOrDescendantElem = function(oControlProps) {
-        let cntlId = this.getKeyValue(oControlProps.ui5Properties,"id");
+        if(!oControlProps || !oControlProps.ui5Properties) return null;
+        let cntlId = vyperUtil.getKeyValue(oControlProps.ui5Properties,"id");
         if(oControlProps && cntlId) {
             var oControl = sap.ui.getCore().byId(cntlId);
             return this.recursiveCheckAncestorElemOrDesc(oControl);
@@ -189,33 +176,216 @@ var ElementCentricStrategy = function() {
 
      // CASE 2
      this.checkIfBwtAggrAndAggrElem = function(oControlProps) {
-        let cntlId = this.getKeyValue(oControlProps.ui5Properties,"id");
+        if(!oControlProps || !oControlProps.ui5Properties) return null;
+        let cntlId = vyperUtil.getKeyValue(oControlProps.ui5Properties,"id");
         if(oControlProps && cntlId) {
             var oControl = sap.ui.getCore().byId(cntlId);
-            return this.recursiveCheckDescendantOfAggregation(oControl) && 
-            (!this.recursiveCheckAncestorElemOrDesc(oControl));
+            var oCandControl = this.recursiveCheckDescendantOfAggregation(oControl);
+            if(oCandControl && (!this.recursiveCheckAncestorElemOrDesc(oControl))) {
+                return oCandControl;
+            }
+            return null;
         }
     }
 
     // CASE 3
     this.checkIfAggregationExactly = function(oControlProps) {
-        let cntlId = this.getKeyValue(oControlProps.ui5Properties,"id");
+        if(!oControlProps || !oControlProps.ui5Properties) return null;
+        let cntlId = vyperUtil.getKeyValue(oControlProps.ui5Properties,"id");
         if(oControlProps && cntlId) {
             var oControl = sap.ui.getCore().byId(cntlId);
-            return this.checkAggregation(oControl);
+             if(this.checkAggregation(oControl)){
+                return oControl;
+             } else {
+                 return null;
+             }
         }
     }
 
      // Check agreggation element
      this.checkIfAggregationElement = function(oControlProps) {
-        let cntlId = this.getKeyValue(oControlProps.ui5Properties,"id");
+        if(!oControlProps.ui5Properties) return null;
+        let cntlId = vyperUtil.getKeyValue(oControlProps.ui5Properties,"id");
         if(oControlProps && cntlId) {
             var oControl = sap.ui.getCore().byId(cntlId);
-            return this.recursiveCheckDescendantOfAggregation(oControl) || 
-            this.recursiveCheckAncestorElemOrDesc(oControl);
+            var oCandDescControl = this.recursiveCheckDescendantOfAggregation(oControl);
+            var oCandAncControl = this.recursiveCheckAncestorElemOrDesc(oControl);
+            return oCandDescControl || oCandAncControl;
+        }
+    }
+
+    this.getOptSelectors = function(sControlId) {
+        var oRes = [];
+        var oResPar1 = [];
+        if(!sControlId) return {};
+        let oElemProperties = vyperUtil.getAllElementProperties(sControlId);
+        let oAggrElement = this.checkIfAggrOrDescendantElem(oElemProperties);
+        let oAggrElementBwt = this.checkIfBwtAggrAndAggrElem(oElemProperties);
+        let oAggrElementExactly = this.checkIfAggregationExactly(oElemProperties);
+        if(oAggrElement){
+            // CASE 1
+            oRes = evaluator.evalElementProperties(oElemProperties, true, false, false);
+            if(oRes.success){
+                return oRes.selector;
+            }
+            //Get aggregation & direct ancestor props
+            if(oRes.fieldsMap && oAggrElement  && oElemProperties) {
+                //let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(oAggrElement.getId());
+                let oAncestorElemProperties = vyperUtil.getAllElementProperties(oAggrElement.getId());
+                oResPar1 = evaluator.evalAncestorAggrElmProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties, oAncestorElemProperties);
+                if(oResPar1.success){
+                    return oResPar1.selector;
+                }
+            } else {
+                oResPar1.fieldsMap = oRes.fieldsMap;
+            }
+            //Get direct descendant recursively until null
+            if(oResPar1.fieldsMap && oElemProperties) {
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
+                oResPar1 = evaluator.evalDescendantAggrProperties(oResPar1.fieldsMap, oElemProperties, aDescendentProps);
+                if(oResPar1.success){
+                    return oResPar1.selector;
+                }
+            }
+            // Get ancestor instanceof aggregation element and then get descentants recursively, no current control, select base on ui5 property value
+            if(oAggrElement && oRes.fieldsMap && oElemProperties) {
+                let oAncestorElemProperties = vyperUtil.getAllElementProperties(oAggrElement.getId());
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oAncestorProperties.ui5Properties.id);
+                oRes = evaluator.evalAncestorWithDescProperties(oRes.fieldsMap, oElemProperties, oAncestorElemProperties, aDescendentProps);
+                if(oRes.success){
+                    return oRes.selector;
+                }
+            }
+            // Use index as fallback [use index as property]
+            oRes = evaluator.getIndex(oRes.fieldsMap, oElemProperties);
+            if(oRes.success){
+                return oRes.selector;
+            }
+            // Finished 
+            return oRes.selector;
+        } else if(oAggrElementBwt) {
+            // CASE 2
+            oRes = evaluator.evalElementProperties(oElemProperties, true, true, false);
+            if(oRes.success){
+                return oRes.selector;
+            }
+
+            if(oRes.fieldsMap && oAggrElementBwt) {
+               // check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
+               let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementBwt.getId());
+               oRes = evaluator.evalBwtAncestorProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
+               if(oRes.success){
+                return oRes.selector;
+               }
+            }
+
+            if(oRes.fieldsMap && oElemProperties) {
+                // check descendant use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalBwtDescendantProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+
+            if(oRes.fieldsMap && oElemProperties) {
+                // check descendant use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalBwtSiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+
+             // Use index as fallback [use index as property]
+             oRes = evaluator.getIndex(oRes.fieldsMap, oElemProperties);
+             if(oRes.success){
+                 return oRes.selector;
+             }
+            // Finished 
+            return oRes.selector;
+        } else if(oAggrElementExactly) {
+            // CASE 3
+            oRes = evaluator.evalElementProperties(oElemProperties, true, false, true);
+            if(oRes.success){
+                return oRes.selector;
+            }
+
+            if(oRes.fieldsMap && oAggrElementExactly) {
+                // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
+                let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementExactly.getId());
+                oRes = evaluator.evalExactlyAncestorsProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+             }
+
+             if(oRes.fieldsMap && oElemProperties) {
+                // check descendant use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalExactlyDescentantsProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+
+            if(oRes.fieldsMap && oElemProperties) {
+                // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalExactlySiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+ 
+            if(oRes.fieldsMap && oElemProperties) {
+                oRes = evaluator.evalUIPropertiesForElement(oRes.fieldsMap, oElemProperties);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+            // Finished 
+            return oRes.selector;
+        } else {
+            // No agregation element
+            oRes = evaluator.evalElementProperties(oElemProperties, false, false, false);
+            if(oRes.success){
+                return oRes.selector;
+            } 
+
+            if(oRes.fieldsMap && oAggrElementExactly) {
+                // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(sControlId);
+                oRes = evaluator.evalAncestorsProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+             }
+
+             if(oRes.fieldsMap && oElemProperties) {
+                // check descendant use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalDescentantsProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+
+            if(oRes.fieldsMap && oElemProperties) {
+                // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
+                oRes = evaluator.evalSiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
+                if(oRes.success){
+                 return oRes.selector;
+                }
+            }
+
+            // Finished 
+            return oRes.selector;
         }
     }
 };
 window.ElementCentricStrategy = new ElementCentricStrategy();
-module.exports = new ElementCentricStrategy();
+module.exports = window.ElementCentricStrategy;
 });

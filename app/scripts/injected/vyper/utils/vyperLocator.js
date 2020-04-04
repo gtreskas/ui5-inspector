@@ -231,69 +231,75 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     return domProperties;
   }
 
+  function retrieveCompositeBindings(oBinding, aBindingInfos){
+    if (!oBinding) return;
+    if (oBinding.getBindings && oBinding.getBindings() && aBindingInfos) {
+      var aBindings = oBinding.getBindings();
+      for (let i = 0; i < aBindings.length; i++) {
+        for (let j = 0; j < aBindingInfos.length; j++) {
+          try {
+            if (!aBindings[i].getBindings &&
+                        aBindingInfos[j].path === aBindings[i].getPath() && 
+                        aBindings[i].getValue) {
+              aBindingInfos[j].value = aBindings[i].getValue();
+            } else if (aBindings[i].getBindings){
+              retrieveCompositeBindings(aBindings[i], aBindingInfos);
+            }
+          // eslint-disable-next-line no-empty
+          } catch (error) {
+          }
+        }
+      }
+    } else if (!oBinding.getBindings && aBindingInfos) {
+      for (let j = 0; j < aBindingInfos.length; j++) {
+        try {
+          if (aBindingInfos[j].path === oBinding.getPath() &&
+                    oBinding.getValue) {
+            aBindingInfos[j].value = oBinding.getValue(); 
+          }
+        // eslint-disable-next-line no-empty
+        } catch (error) {
+        }
+      }
+    }
+  }
+
   function retrieverBindingPaths(oControl, sPropKey) {
     var aBindingInfos = [];
     var aBindingInfoParts = oControl.getBindingInfo(sPropKey).parts;
     try {
-        if (aBindingInfoParts && aBindingInfoParts.length > 0) {
-            for (var i = 0; i < aBindingInfoParts.length; i++) {
-                var sModel = "";
-                if (!aBindingInfoParts[i].path) continue;
-                if (aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
-                aBindingInfos.push({
-                model: sModel,
-                path: aBindingInfoParts[i].path,
-                value: ""
-                });
-            }
-            if(oControl.getBinding && oControl.getBinding(sPropKey)) {
-                var oBinding = oControl.getBinding(sPropKey);
-                if(oBinding.getBindings && oBinding.getBindings() && 
-                    aBindingInfos && aBindingInfos.length > 1) {
-                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                    for (var i = 0; i < aBindings.length; i++) {
-                        for (var j = 0; j < aBindingInfos.length; j++) {
-                    var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                            if(aBindingInfos[j].path === aBindings[i].getPath()) {
-                                aBindingInfos[j].value = aBindings[i].getValue();
-                            }
-                        }
-                    }
-                } else if(aBindingInfos && aBindingInfos.length === 1 &&
-                    aBindingInfos[0].path === oBinding.getPath()) {
-                    aBindingInfos[0].value = oBinding.getValue();
-                }
-            }
-            } else {
-                var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
-                var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
-                if (sBindingDataStr) {
-                aBindingInfos.push({
-                    model: sBindingDataModelStr,
-                    path: sBindingDataStr,
-                    value: ""
-                });
-                if(oControl.getBinding && oControl.getBinding(sPropKey)) {
-                    var oBinding = oControl.getBinding(sPropKey);
-                    if(oBinding.getBindings && oBinding.getBindings() && 
-                    aBindingInfos && aBindingInfos.length > 1) {
-                        var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                        if(aBindings.length > 0 && aBindings[0].getPath() === sBindingDataStr) {
-                            aBindingInfos[0].value = aBindings[0].getValue();
-                        }
-                    } else if(aBindingInfos && aBindingInfos.length === 1 &&
-                        aBindingInfos[0].path === oBinding.getPath()) {
-                        aBindingInfos[0].value = oBinding.getValue();
-                    }
-                }
-            }
+      if (aBindingInfoParts && aBindingInfoParts.length > 0) {
+        for (let i = 0; i < aBindingInfoParts.length; i++) {
+          var sModel = "";
+          if (!aBindingInfoParts[i].path) continue;
+          if (aBindingInfoParts[i].model) sModel = aBindingInfoParts[i].model;
+          aBindingInfos.push({
+            model: sModel,
+            path: aBindingInfoParts[i].path,
+            value: ""
+          });
         }
+      } else {
+        var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
+        var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
+        if (sBindingDataStr) {
+          aBindingInfos.push({
+            model: sBindingDataModelStr,
+            path: sBindingDataStr,
+            value: ""
+          });
+        }
+      }
+        // Get values
+      if (oControl.getBinding && oControl.getBinding(sPropKey)) {
+        var oBinding = oControl.getBinding(sPropKey);
+        retrieveCompositeBindings(oBinding, aBindingInfos);
+      } 
     } catch (error) {
         //Continue
     }
     return aBindingInfos;
-}
-
+  }
 
   function getBindDataForAggregation(oControl, sPropKey) {
     var aAggregation = getControlAllAggregations(oControl);
@@ -560,38 +566,101 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
       return bPass;
     }
 
-              //debugger;
+    //debugger;
     for (var key in mProperties) {
       var value = mProperties[key];
-      if(key !== "domProperties"){
-          if (value && Array.isArray(value)) {
-              value.map(function(locatorBindingData){
-                  bPass = bPass && compareBindingPathAndModelProperty(key, locatorBindingData, oControl);
-              });
-          } else if (value && typeof value === "object") {
-              bPass = bPass && compareBindingPathAndModelProperty(key, value, oControl);
-          } else if (key === "bindingContextPath") {
-              var sPath = getControlBindingContextPath(oControl);
-              if (sPath && value) {
-                  bPass = bPass && wildCardAndNormalCompare(value, sPath);
-              } else if (!sPath && (value !== undefined && value !== null)) {
-                  bPass = false;
-              }
-          } else if (key === "viewName") {
-              bPass = bPass && isControlInViewName(oControl, value);
-          } else if (key === "viewId") {
-              bPass = bPass && isControlInViewId(oControl, value);
-          } else {
-              if (key === "id") {
-                  var bIdProp = compareId(oControl, value);
-                  bPass = bPass && bIdProp;
-              } else {
-                  var bPropVal = compareProperty(oControl, key, value);
-                  if (!bPropVal) bPropVal = compareAggregation(oControl, key, value);
-                  if (!bPropVal) bPropVal = compareAssociation(oControl, key, value);
-                  bPass = bPass && bPropVal;
-              }
+      if (key !== "domProperties" && 
+          key !== "metadata" &&
+          key !== "ancestorProperties" &&
+          key !== "descendantProperties" &&
+          key !== "siblingProperties") {
+        if (value && Array.isArray(value)) {
+          let bIsStringVal = false;
+          if (value.length > 0) {
+                //Check type
+            const stVal = value[0];
+            if (typeof stVal === "string"){
+              bIsStringVal = true;
+            }
           }
+          value.map(function(valData){
+            if (bIsStringVal) {
+              bPass = bPass && compareArrayStrElements(key, valData, oControl);
+            } else {
+              bPass = bPass && compareBindingPathAndModelProperty(key, valData, oControl);
+            }
+          });
+        } else if (value && typeof value === "object") {
+          bPass = bPass && compareBindingPathAndModelProperty(key, value, oControl);
+        } else if (key === "bindingContextPath") {
+          var sPath = getControlBindingContextPath(oControl);
+          if (sPath && value) {
+            bPass = bPass && wildCardAndNormalCompare(value, sPath);
+          } else if (!sPath && (value !== undefined && value !== null)) {
+            bPass = false;
+          }
+        } else if (key === "viewName") {
+          bPass = bPass && isControlInViewName(oControl, value);
+        } else if (key === "viewId") {
+          bPass = bPass && isControlInViewId(oControl, value);
+        } else {
+          if (key === "id") {
+            var bIdProp = compareId(oControl, value);
+            bPass = bPass && bIdProp;
+          } else {
+            var bPropVal = compareProperty(oControl, key, value);
+            if (!bPropVal) bPropVal = compareAggregation(oControl, key, value);
+            if (!bPropVal) bPropVal = compareAssociation(oControl, key, value);
+            bPass = bPass && bPropVal;
+          }
+        }
+      }
+    }
+    return bPass;
+  }
+
+  function compareArrayStrElements(key, elemId, oControl) {
+    let bPass = false;
+    var aPropValues = [];
+    try {
+      aPropValues = getAssociationProperty(oControl, key) || [];
+    // eslint-disable-next-line no-empty
+    } catch (error) {     
+    }
+
+    if (aPropValues.length === 0){
+      try {
+        //Try again
+        aPropValues = getAggregationProperty(oControl, key) || [];
+      // eslint-disable-next-line no-empty
+      } catch (error) {
+      }
+    }
+
+    if (aPropValues.length === 0){
+      try {
+        aPropValues = getControlProperty(oControl, key) || [];
+      } catch (error) {
+        // Continue
+      }
+    }
+    
+    if ((aPropValues.length === 0 && elemId) ||
+      (aPropValues.length > 0 && !elemId)){
+      return bPass;
+    } else if (aPropValues.length === 0 && !elemId) {
+      return true;
+    }
+
+    for (let index = 0; index < aPropValues.length; index++) {
+      const elem = aPropValues[index];
+      if (elem && elemId) {
+        const elemLow = elem.toLowerCase();
+        const elemIdLow = elemId.toLowerCase();
+        if (wildCardAndNormalCompare(elemIdLow, elemLow)){
+          bPass = true;
+          break;
+        }
       }
     }
     return bPass;
@@ -692,22 +761,40 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     }
     bPass = bPass && filterMetadata(elementProperties, oControl);
     if (!bPass) return bPass;
-    if (elementProperties.mProperties && typeof elementProperties.mProperties === "object") {
+    if (elementProperties && elementProperties.mProperties && typeof elementProperties.mProperties === "object") {
                           //if(oControl.getId() === "__box0")
                           //debugger;
-        bPass = bPass && compareToProperties(elementProperties.mProperties, oControl);
-      } else if(elementProperties && typeof elementProperties === "object"
+      bPass = bPass && compareToProperties(elementProperties.mProperties, oControl);
+    } else if (elementProperties && typeof elementProperties === "object"
       && !elementProperties.mProperties){
-          bPass = bPass && compareToProperties(elementProperties, oControl); 
-      }
+      bPass = bPass && compareToProperties(elementProperties, oControl); 
+    }
       
-      if (elementProperties.domProperties && typeof elementProperties.domProperties === "object") {
-        var oNode = convertToDomElement(oControl);
-        bPass = bPass && compareToDomProperties(oNode, elementProperties.domProperties);
-      } 
+    if (elementProperties.domProperties && typeof elementProperties.domProperties === "object") {
+      var oNode = convertToDomElement(oControl);
+      bPass = bPass && compareToDomProperties(oNode, elementProperties.domProperties);
+    } 
+    if (bPass) {
+      var selectObj = elementProperties;
+      if (elementProperties.mProperties) {
+        selectObj = elementProperties.mProperties;
+      }
+      if (selectObj.ancestorProperties) {
+        bPass = bPass && compareToAncestorProperties(selectObj.ancestorProperties, oControl); 
+      }
+
+      if (selectObj.descendantProperties) {
+        bPass = bPass && compareToDescendantElementProperties(selectObj.descendantProperties, oControl); 
+      }
+
+      if (selectObj.siblingProperties) {
+        var oParentControl = getValidParentControl(oControl);
+        bPass = bPass && compareToSiblingElementProperties(selectObj.siblingProperties, oControl, oParentControl); 
+      }
+    }
     return bPass;
   }
-
+  
   function compareToPrevElementProperties(elementProperties, oControl, oParentControl) {
     var bPass = true;
     if ((!elementProperties || isEmptyObject(elementProperties)) && oParentControl) {
@@ -932,8 +1019,8 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     Array.prototype.filter.call(aControls, function(oControl) {
       if (!oControl || !oControl.getId || !oControl.getId()) { return false;}
       var domElem = document.getElementById(oControl.getId());
-      if (domElem) {
-        injectDataForProperties(domElem, oControl);
+      if (domElem && oControl.getVisible && oControl.getVisible()) {
+        //injectDataForProperties(domElem, oControl);
         aFoundNodes.push(domElem);
       }
       return domElem;

@@ -288,6 +288,24 @@ var aBlackListed = [
 ];
 
 var VyperUtil = function() {
+    this.distanceNode = function(aNodes, id) {
+        if(aNodes && aNodes.length > 1) {
+            return aNodes.length + 1;
+        } else if(aNodes && aNodes.length === 1 && aNodes[0].id !== id) {
+            return 99;
+        } else if(aNodes && aNodes.length === 1 && aNodes[0].id === id) {
+            return 0;
+        } else {
+            return 99;
+        }
+    }
+
+    this.isIdGeneric = function(val) {
+        var ManagedObjectMetadata = sap.ui.require("sap/ui/base/ManagedObjectMetadata");
+        return ManagedObjectMetadata.isGeneratedId(val);
+        //var matches = val.match(/\d+/g);
+        //return matches !== null || val.indexOf("clone") !== -1;
+    }
 
     this.isEmptyObject = function(obj) {
         return Object.entries(obj).length === 0 && obj.constructor === Object;
@@ -305,6 +323,17 @@ var VyperUtil = function() {
                 );
         }
         return false;
+    }
+
+    this.getKeyValue = function(oControlProps, key) {
+        if(oControlProps && key !== null && key !== undefined) {
+            for (let index = 0; index < oControlProps.length; index++) {
+                const prop = oControlProps[index];
+                if(prop && prop[key]){
+                    return prop[key];
+                }
+            }
+        }
     }
 
     this.getControlAllProperties = function(oControl) {
@@ -434,12 +463,13 @@ var VyperUtil = function() {
         if(aValNames && aValNames.length > 0) return false;
 
         if(Object.values(oProperty).length <= 0) return false;
-
+        var sPropName = Object.keys(oProperty)[0];
         //var oPropValue = Object.values(oProperty)[0];
 
         if(oPropValue === null ||  oPropValue === undefined || oPropValue.getId || oPropValue === "") return false;
 
-        return this.isString(oPropValue) || this.isNumber(oPropValue) ||  this.isBoolean(oPropValue);
+        return this.isString(oPropValue) || this.isNumber(oPropValue) ||  this.isBoolean(oPropValue) ||
+        (Array.isArray(oPropValue) && oPropValue.length > 0 && this.isString(oPropValue[0]));
     }
 
 
@@ -610,6 +640,46 @@ var VyperUtil = function() {
         return elemProperties;
     }
 
+    this.retrieveCompositeBindings = function(oBinding, aBindingInfos){
+        if(!oBinding) return;
+        if(oBinding.getBindings && oBinding.getBindings() && aBindingInfos) {
+            var aBindings = oBinding.getBindings();
+            for (var i = 0; i < aBindings.length; i++) {
+                for (var j = 0; j < aBindingInfos.length; j++) {
+                    try {
+                        if(!aBindings[i].getBindings &&
+                            aBindingInfos[j].path === aBindings[i].getPath() && 
+                            aBindings[i].getValue) {
+                                aBindingInfos[j].value = aBindings[i].getValue();
+                        } 
+                        if(!aBindings[i].getBindings &&
+                            aBindingInfos[j].path === aBindings[i].getPath() && 
+                            aBindings[i].sInternalType) {
+                                aBindingInfos[j].type = aBindings[i].sInternalType;
+                        } else if(aBindings[i].getBindings){
+                            this.retrieveCompositeBindings(aBindings[i], aBindingInfos);
+                        }
+                    } catch (error) {
+                    }
+                }
+            }
+        } else if(!oBinding.getBindings && aBindingInfos) {
+            for (var j = 0; j < aBindingInfos.length; j++) {
+                try {
+                    if(aBindingInfos[j].path === oBinding.getPath() &&
+                        oBinding.getValue) {
+                        aBindingInfos[j].value = oBinding.getValue(); 
+                    } 
+                    if(aBindingInfos[j].path === oBinding.getPath() &&
+                        oBinding.sInternalType) {
+                            aBindingInfos[j].type = oBinding.sInternalType;
+                    }
+                } catch (error) {
+                }
+            }
+        }
+    }
+
     this.retrieverBindingPaths = function(oControl, sPropKey) {
         var aBindingInfos = [];
         var aBindingInfoParts = oControl.getBindingInfo(sPropKey).parts;
@@ -622,53 +692,30 @@ var VyperUtil = function() {
                     aBindingInfos.push({
                     model: sModel,
                     path: aBindingInfoParts[i].path,
-                    value: ""
+                    value: "",
+                    type: "",
                     });
                 }
-                if(oControl.getBinding && oControl.getBinding(sPropKey)) {
-                    var oBinding = oControl.getBinding(sPropKey);
-                    if(oBinding.getBindings && oBinding.getBindings() && 
-                        aBindingInfos && aBindingInfos.length > 1) {
-                        var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                        for (var i = 0; i < aBindings.length; i++) {
-                            for (var j = 0; j < aBindingInfos.length; j++) {
-                        var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                                if(aBindingInfos[j].path === aBindings[i].getPath()) {
-                                    aBindingInfos[j].value = aBindings[i].getValue();
-                                }
-                            }
-                        }
-                    } else if(aBindingInfos && aBindingInfos.length === 1 &&
-                        aBindingInfos[0].path === oBinding.getPath()) {
-                        aBindingInfos[0].value = oBinding.getValue();
-                    }
-                }
-                } else {
-                    var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
-                    var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
-                    if (sBindingDataStr) {
+            } else {
+                var sBindingDataStr = oControl.getBindingInfo(sPropKey).path;
+                var sBindingDataModelStr = oControl.getBindingInfo(sPropKey).model;
+                if (sBindingDataStr) {
                     aBindingInfos.push({
                         model: sBindingDataModelStr,
                         path: sBindingDataStr,
-                        value: ""
+                        value: "",
+                        type: ""
                     });
-                    if(oControl.getBinding && oControl.getBinding(sPropKey)) {
-                        var oBinding = oControl.getBinding(sPropKey);
-                        if(oBinding.getBindings && oBinding.getBindings() && 
-                        aBindingInfos && aBindingInfos.length > 1) {
-                            var aBindings = oControl.getBindingInfo(sPropKey).getBindings();
-                            if(aBindings.length > 0 && aBindings[0].getPath() === sBindingDataStr) {
-                                aBindingInfos[0].value = aBindings[0].getValue();
-                            }
-                        } else if(aBindingInfos && aBindingInfos.length === 1 &&
-                            aBindingInfos[0].path === oBinding.getPath()) {
-                            aBindingInfos[0].value = oBinding.getValue();
-                        }
-                    }
                 }
             }
+            // Get values
+            if (oControl.getBinding && oControl.getBinding(sPropKey)) {
+                var oBinding = oControl.getBinding(sPropKey);
+                this.retrieveCompositeBindings(oBinding, aBindingInfos);
+            } 
         } catch (error) {
             //Continue
+            console.info(error);
         }
         return aBindingInfos;
     }
@@ -1016,4 +1063,4 @@ var VyperUtil = function() {
     }
 };
 window.VyperUtilities = new VyperUtil();
-module.exports = new VyperUtil();
+module.exports = window.VyperUtilities;
