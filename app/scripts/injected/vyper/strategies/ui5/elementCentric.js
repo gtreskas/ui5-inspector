@@ -219,6 +219,7 @@ var ElementCentricStrategy = function() {
     this.getOptSelectors = function(sControlId) {
         var oRes = {};
         var oResPar1 = [];
+        let finalRes = {};
         if(!sControlId) return {};
         let oElemProperties = vyperUtil.getAllElementProperties(sControlId);
         if(!oElemProperties) return {};
@@ -227,8 +228,7 @@ var ElementCentricStrategy = function() {
         let oAggrElementExactly = this.checkIfAggregationExactly(oElemProperties);
         if(oAggrElement){
             // CASE 1
-            let finalRes = {};
-            oRes = evaluator.evalElementProperties(oElemProperties, true, false, false);
+            oRes = evaluator.evalElementProperties(oElemProperties);
             if(oRes.success){
                 return oRes.selector;
             }
@@ -415,11 +415,12 @@ var ElementCentricStrategy = function() {
             return oRes.selector;
         } else if(oAggrElementBwt) {
             // CASE 2
-            oRes = evaluator.evalElementProperties(oElemProperties, true, true, false);
+            oRes = evaluator.evalElementProperties(oElemProperties);
             if(oRes.success){
                 return oRes.selector;
             }
-
+            Object.assign(finalRes, oRes);
+            
             if(oRes.fieldsMap && oAggrElementBwt) {
                // check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
                let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementBwt.getId());
@@ -430,7 +431,7 @@ var ElementCentricStrategy = function() {
                 "selector": {},
                 "aNodes": []
                 };
-               let oResB1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties);
+               let oResB1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 3);
                if(oResB1.success){
                 return oResB1.selector;
                }
@@ -471,7 +472,7 @@ var ElementCentricStrategy = function() {
         } else if(oAggrElementExactly) {
             if(!oElemProperties) return {};
             // CASE 3
-            oRes = evaluator.evalElementProperties(oElemProperties, true, false, true);
+            oRes = evaluator.evalElementProperties(oElemProperties);
             if(oRes.success){
                 return oRes.selector;
             }
@@ -523,7 +524,7 @@ var ElementCentricStrategy = function() {
             let oRes2 = {};
             let oRes3 = {};
             // No agregation element
-            oRes = evaluator.evalElementProperties(oElemProperties, false, false, false);
+            oRes = evaluator.evalElementProperties(oElemProperties);
             if(oRes.success){
                 return oRes.selector;
             }
