@@ -290,7 +290,7 @@ var aBlackListed = [
 var VyperUtil = function() {
     this.distanceNode = function(aNodes, id) {
         if(aNodes && aNodes.length > 1) {
-            return aNodes.length + 1;
+            return aNodes.length - 1;
         } else if(aNodes && aNodes.length === 1 && aNodes[0].id !== id) {
             return 99;
         } else if(aNodes && aNodes.length === 1 && aNodes[0].id === id) {
@@ -475,6 +475,7 @@ var VyperUtil = function() {
 
     this.retrieveDomProperties = function(oNode) {
         var domProperties = [];
+        if(!oNode) return domProperties;
         domProperties.push({
             "nodeName" : oNode.nodeName
         });
@@ -962,6 +963,7 @@ var VyperUtil = function() {
             //console.log('no node html elements found');
         return aCandidateControls;
         }
+        var that = this;
         Array.prototype.filter.call(nodes, function(node) {
             //console.log("node -->" + node);
         var nodeId = node.getAttribute("id");
@@ -979,12 +981,12 @@ var VyperUtil = function() {
                 aCandidateControls.push(oControl);
                 } else {
                     //console.log("Im in else iterate 1");
-                this.retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
+                that.retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
                 return false;
                 }
             } else {
                 //console.log("Im in else iterate 2");
-                this.retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
+                that.retrieveValidUI5ControlsSubElements(chNode.children, aCandidateControls);
                 return false;
             }
             });
@@ -997,7 +999,7 @@ var VyperUtil = function() {
             aCandidateControls.push(oControl);
             } else {
                 //console.log("Im in else iterate 3 -->" + node.children.length);
-            this.retrieveValidUI5ControlsSubElements(node.children, aCandidateControls);
+            that.retrieveValidUI5ControlsSubElements(node.children, aCandidateControls);
             return false;
             }
         }
@@ -1007,10 +1009,12 @@ var VyperUtil = function() {
     }
 
     this.getAllDescendantElementsProps = function(sControlId) {
-        var aAllChildrenNodes = document.getElementById(sControlId).children;
+        let oControl = document.getElementById(sControlId);
         var aPropsForAllDescentants = [];
         var aCandidateControls = [];
         var aValidControls = [];
+        if(!oControl) { return aPropsForAllDescentants; }
+        var aAllChildrenNodes = oControl.children;
         aValidControls = this.retrieveValidUI5ControlsSubElements(aAllChildrenNodes, aCandidateControls);
         if (!aValidControls || aValidControls.length === 0) return null;
         
