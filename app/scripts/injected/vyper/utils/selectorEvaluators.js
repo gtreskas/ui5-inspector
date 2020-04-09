@@ -203,472 +203,203 @@ var Evaluator = function() {
         return elmId;
     }
 
-    this.evalElementProperties = function(oElemProperties, isAggregationElement, isAgreggationElementBtw, isAggregationExactly) {
+    this.evalElementProperties = function(oElemProperties) {
         var includedFields = {};
         var aFoundNodes = [];
         var selector = null;
+        var finalSelector= null;
         var dist = 99;
+        var finalDist = 999;
         if(!oElemProperties) return {};
-        //CASE 1///////////////////////////////////////////////////////////////////////////
-        if(isAggregationElement && !isAgreggationElementBtw && !isAggregationExactly) {
+        // Add view Name if exists
+        const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
+        if(viewName) {
+            includedFields["viewName"] = viewName;
+        }
+        includedFields["metadata"] = oElemProperties.metadata[0].metadata;
 
-            // Add view Name if exists
-            const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
-            if(viewName) {
-                includedFields["viewName"] = viewName;
-            }
-            // Evaluate bindingContextPath
-            let bindingContextPath = null;
-            if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
-                // Remove empty, guid, and booleans
-                bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
-                if(bindingContextPath) {
-                    includedFields["bindingContextPath"] = bindingContextPath;
-                }
-            }
-
-            // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
-            const exclProps = ["mandatory","editable", "visible", "enabled"];
-            const aExclTypes = ["boolean", "sap.m.ListMode"];
-            const exclPaterns = ["uxfc", "_fc", "fc_"];
-            const prefProps = ["value", "text", "tooltip", "title","items"];
-            includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);
-            
-            includedFields["metadata"] = oElemProperties.metadata[0].metadata;
-
-            if(Object.keys(includedFields).length > 0) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-            const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
-            if(aFoundNodes && vyperUtil.distanceNode(aFoundNodes, id) === 0) {
-                // Success
-                return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            }
-
-            const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
-            if(labelForId){
-                if(!vyperUtil.isIdGeneric(labelForId)) {
-                    const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                    includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
-                 }  
-            }
-
-            const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
-            if(ariaLabelledBy && ariaLabelledBy.length > 0){
+        // Add id
+        const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
+        if(id) {
+            if(!vyperUtil.isIdGeneric(id)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaLabelledBy.length; index++) {
-                    const elemId = ariaLabelledBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                        includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
+                includedFields["id"] = this.wildCardIdsViewName(id, viewId);
             }
+        }
 
-            const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
-            if(ariaDescribedBy && ariaDescribedBy.length > 0){
-                const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaDescribedBy.length; index++) {
-                    const elemId = ariaDescribedBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                        includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
-            }
+        if(Object.keys(includedFields).length > 0) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
+            selector = queryBuilder.buildSelector(includedFields, "elementProperties");
+            aFoundNodes = ui5All(selector);
+        }
 
-            if(Object.keys(includedFields).length > 1) {
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-
-            let dist2 = vyperUtil.distanceNode(aFoundNodes, id);
-            if(aFoundNodes && dist2 === 0) {
+        dist = vyperUtil.distanceNode(aFoundNodes, id);
+        if(aFoundNodes &&  dist === 0) {
                 // Success
                 return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            }
-
-            //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
-            // Check no UI5 property and binding property
-            const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
-            retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, selector, prefUIProps, "elementProperties", null, dist2, id);
-            
-            dist = vyperUtil.distanceNode(retObject.aNodes, id);
-            if(retObject.aNodes && dist === 0) {
-                // Success
-                return retObject;
-            } else {
-                let retDist = dist2;
-                let fieldMp = retObject.fieldsMap;
-                let sel = retObject.selector;
-                let aNods = retObject.aNodes;
-                if(dist < dist2) {
-                    retDist = dist;
-                    fieldMp = includedFields;
-                    sel = selector;
-                    aNods = aFoundNodes;
-                }
-                // Didnt succeed
-                return {
-                    "success": false,
-                    "fieldsMap": fieldMp,
-                    "selector": sel,
-                    "aNodes": fieldMp,
-                    "distance": retDist
-                };
-            }
-
-
-        } else if(isAggregationElement && isAgreggationElementBtw && !isAggregationExactly){
-            // CASE 2 /////////////////////////////////////////////////////////////////////////
-
-            // Add view Name if exists
-            const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
-            if(viewName) {
-                includedFields["viewName"] = viewName;
-            }
-
-             // Add id
-             const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
-             if(id) {
-                 if(!vyperUtil.isIdGeneric(id)) {
-                    const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                     includedFields["id"] = this.wildCardIdsViewName(id, viewId);
-                 }
-             }
-
-
-             if(Object.keys(includedFields).length > 0) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                includedFields["metadata"] = oElemProperties.metadata[0].metadata;
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-
-             if(aFoundNodes && vyperUtil.distanceNode(aFoundNodes, id) === 0) {
-                // Success
-                return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            } 
-            includedFields["metadata"] = oElemProperties.metadata[0].metadata;
-            // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
-            const exclProps = ["mandatory","editable", "visible", "enabled"];
-            const exclPaterns = ["uxfc", "_fc", "fc_"];
-            const aExclTypes = ["boolean", "sap.m.ListMode"];
-            const prefProps = ["value", "text", "tooltip", "title","items"];
-            includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);     
-            
-            if(Object.keys(includedFields).length > 1) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-
-            // Evaluate bindingContextPath
-            let bindingContextPath = null;
-            if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
-                // Remove empty, guid, and booleans
-                bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
-                if(bindingContextPath) {
-                    includedFields["bindingContextPath"] = bindingContextPath;
-                }
-            }
-
-            const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
-            if(labelForId){
-                if(!vyperUtil.isIdGeneric(labelForId)) {
-                    const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                    includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
-                 }  
-            }
-
-            const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
-            if(ariaLabelledBy && ariaLabelledBy.length > 0){
-                const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaLabelledBy.length; index++) {
-                    const elemId = ariaLabelledBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                        includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
-            }
-
-            const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
-            if(ariaDescribedBy && ariaDescribedBy.length > 0){
-                const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaDescribedBy.length; index++) {
-                    const elemId = ariaDescribedBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                        includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
-            }
-
-            if(Object.keys(includedFields).length > 1) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-            const dist2 = vyperUtil.distanceNode(aFoundNodes, id); 
-            if(aFoundNodes && dist2 === 0) {
-                // Success
-                return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            } 
-
-
-            //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
-            // Check no UI5 property and binding property
-            const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
-            retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, selector, prefUIProps, "elementProperties", null, dist2, id);
-            
-            dist = vyperUtil.distanceNode(retObject.aNodes, id);
-            if(retObject.aNodes && dist === 0) {
-                // Success
-                return retObject;
-            } else {
-                let retDist = dist2;
-                let fieldMp = retObject.fieldsMap;
-                let sel = retObject.selector;
-                if(dist < dist2) {
-                    retDist = dist;
-                    fieldMp = includedFields;
-                    sel = selector;
-                }
-                // Didnt succeed
-                return {
-                    "success": false,
-                    "fieldsMap": fieldMp,
-                    "selector": sel,
-                    "aNodes": fieldMp,
-                    "distance": retDist
-                };
-            }
-
-        } else if (isAggregationElement && !isAgreggationElementBtw && isAggregationExactly) {
-            // CASE 3
-            // Add view Name if exists
-            const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
-            if(viewName) {
-                includedFields["viewName"] = viewName;
-            }
-
-             // Add id
-             const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
-             if(id) {
-                 if(!vyperUtil.isIdGeneric(id)) {
-                    const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                     includedFields["id"] = this.wildCardIdsViewName(id, viewId);
-                 }
-             }
-
-             includedFields["metadata"] = oElemProperties.metadata[0].metadata;
-
-              // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
-              const exclProps = ["mandatory","editable", "visible", "enabled"];
-              const exclPaterns = ["uxfc", "_fc", "fc_"];
-              const aExclTypes = ["boolean", "sap.m.ListMode"];
-              const prefProps = ["value", "text", "tooltip", "title", "items"];
-              includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);     
-            
-
-            // Evaluate bindingContextPath
-            let bindingContextPath = null;
-            if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
-                // Remove empty, guid, and booleans
-                bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
-                if(bindingContextPath) {
-                    includedFields["bindingContextPath"] = bindingContextPath;
-                }
-            }
-
-            if(includedFields["id"] && Object.keys(includedFields).length > 0) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-            dist = vyperUtil.distanceNode(aFoundNodes, id);
-            if(aFoundNodes && dist === 0) {
-                // Success
-                return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            } else {
-                // Didnt succeed
-                return {
-                    "success": false,
-                    "fieldsMap": includedFields,
-                    "selector": selector,
-                    "aNodes": aFoundNodes,
-                    "distance": dist
-                };
-            }
-
-        } else {
-            // No aggregation
-            if(!oElemProperties) return {
-                "success": false,
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
                 "fieldsMap": includedFields,
-                "aNodes": aFoundNodes
+                "distance": dist
             };
-            // Add view Name if exists
-            const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
-            if(viewName) {
-                includedFields["viewName"] = viewName;
-            }
+        }
 
-             // Add id
-             const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
-             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-             if(id) {
-                 if(!vyperUtil.isIdGeneric(id)) {
-                     includedFields["id"] = this.wildCardIdsViewName(id, viewId);
-                 }
-             }
-             includedFields["metadata"] = oElemProperties.metadata[0].metadata;
+        if(dist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = dist;
+        }
 
-             if(includedFields["id"]) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
+        // Evaluate bindingContextPath
+        let bindingContextPath = null;
+        if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
+            // Remove empty, guid, and booleans
+            bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
+            if(bindingContextPath) {
+                includedFields["bindingContextPath"] = bindingContextPath;
             }
-            
-            if(aFoundNodes && vyperUtil.distanceNode(aFoundNodes, id) === 0) {
+        }
+
+        if(Object.keys(includedFields).length > 0) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
+            selector = queryBuilder.buildSelector(includedFields, "elementProperties");
+            aFoundNodes = ui5All(selector);
+        }
+
+        dist = vyperUtil.distanceNode(aFoundNodes, id);
+        if(aFoundNodes &&  dist === 0) {
                 // Success
                 return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            } 
-            // Add further identifiers
-            const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
-            if(labelForId){
-                if(!vyperUtil.isIdGeneric(labelForId)) {
-                    const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                    includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
-                 }  
-            }
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": dist
+            };
+        }
 
-            const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
-            if(ariaLabelledBy && ariaLabelledBy.length > 0){
+        if(dist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = dist;
+        }
+
+        // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
+        const exclProps = ["mandatory","editable", "visible", "enabled"];
+        const aExclTypes = ["boolean", "sap.m.ListMode"];
+        const exclPaterns = ["uxfc", "_fc", "fc_"];
+        const prefProps = ["value", "text", "tooltip", "title","items"];
+        includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);
+        
+
+        if(Object.keys(includedFields).length > 0) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
+            selector = queryBuilder.buildSelector(includedFields, "elementProperties");
+            aFoundNodes = ui5All(selector);
+        }
+
+        dist = vyperUtil.distanceNode(aFoundNodes, id);
+        if(aFoundNodes && dist === 0) {
+            // Success
+            return {
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": dist
+            };
+        }
+
+        if(dist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = dist;
+        }
+
+        const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
+        if(labelForId){
+            if(!vyperUtil.isIdGeneric(labelForId)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaLabelledBy.length; index++) {
-                    const elemId = ariaLabelledBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                        includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
+                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
+                }  
+        }
+
+        const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
+        if(ariaLabelledBy && ariaLabelledBy.length > 0){
+            const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            for (let index = 0; index < ariaLabelledBy.length; index++) {
+                const elemId = ariaLabelledBy[index];
+                if(!vyperUtil.isIdGeneric(elemId)) {
+                    if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
+                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId));
+                    }   
+            }
+        }
+
+        const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
+        if(ariaDescribedBy && ariaDescribedBy.length > 0){
+            const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            for (let index = 0; index < ariaDescribedBy.length; index++) {
+                const elemId = ariaDescribedBy[index];
+                if(!vyperUtil.isIdGeneric(elemId)) {
+                    if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
+                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId));
+                    }   
+            }
+        }
+
+        if(Object.keys(includedFields).length > 1) {
+            selector = queryBuilder.buildSelector(includedFields, "elementProperties");
+            aFoundNodes = ui5All(selector);
+        }
+
+        let dist2 = vyperUtil.distanceNode(aFoundNodes, id);
+        if(aFoundNodes && dist2 === 0) {
+            // Success
+            return {
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": dist2
+            };
+        }
+
+        if(dist2 < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = dist2;
+        }
+
+        //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
+        // Check no UI5 property and binding property
+        const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
+        retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, "elementProperties", null, finalDist, id);
+        
+        dist = retObject.distance;
+        if(retObject.aNodes && dist === 0) {
+            // Success
+            return retObject;
+        } else {
+            let fieldMp = includedFields;
+            let aNods = aFoundNodes;
+            if(dist < finalDist){
+                finalSelector={};
+                Object.assign(finalSelector, retObject.selector);
+                finalDist = dist;
+                fieldMp = retObject.fieldsMap;
+                aNods = retObject.aNodes;
             }
 
-            const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
-            if(ariaDescribedBy && ariaDescribedBy.length > 0){
-                const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                for (let index = 0; index < ariaDescribedBy.length; index++) {
-                    const elemId = ariaDescribedBy[index];
-                    if(!vyperUtil.isIdGeneric(elemId)) {
-                        if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                        includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId));
-                     }   
-                }
-            }
-
-            
-            const icon = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "icon");
-            if(icon){
-                includedFields["icon"] = icon;
-            }
-
-            const src = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "src");
-            if(src){
-                includedFields["src"] = src;
-            }
-
-            // Evaluate bindingContextPath
-            let bindingContextPath = null;
-            if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
-                // Remove empty, guid, and booleans
-                bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
-                if(bindingContextPath) {
-                    includedFields["bindingContextPath"] = bindingContextPath;
-                }
-            }
-            
             // Didnt succeed
-            // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
-            const exclProps = ["mandatory","editable", "visible", "enabled"];
-            const exclPaterns = ["uxfc", "_fc", "fc_"];
-            const aExclTypes = ["boolean", "sap.m.ListMode"];
-            const prefProps = ["value", "text", "tooltip", "title","items"];
-            includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);
-            
-            if(Object.keys(includedFields).length > 0) {
-                // If bindingContextPath & at least one bindingProperty (test ui5All)
-                selector = queryBuilder.buildSelector(includedFields, "elementProperties");
-                aFoundNodes = ui5All(selector);
-            }
-            let dist2 = vyperUtil.distanceNode(aFoundNodes, id);
-            if(aFoundNodes && dist2 === 0) {
-                // Success
-                return {
-                    "success": true,
-                    "selector": selector,
-                    "aNodes": aFoundNodes
-                };
-            }
-
-
-            //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
-            // Check no UI5 property and binding property
-            const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
-            const retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, selector, prefUIProps, "elementProperties", null, dist2, id);
-            
-            let dist = vyperUtil.distanceNode(retObject.aNodes, id);
-            if(retObject.aNodes && dist === 0) {
-                // Success
-                return retObject;
-            } else {
-                let retDist = dist2;
-                let fieldMp = includedFields;
-                let sel = selector;
-                let aNod = aFoundNodes;
-                if(dist < dist2) {
-                    retDist = dist;
-                    fieldMp = retObject.fieldsMap;
-                    sel = retObject.selector;
-                    aNod = retObject.aNodes;
-                }
-                // Didnt succeed
-                return {
-                    "success": false,
-                    "fieldsMap": fieldMp,
-                    "aNodes": aNod,
-                    "distance": retDist,
-                    "selector": sel
-                };
-            }
-
+            return {
+                "success": false,
+                "fieldsMap": fieldMp,
+                "selector": finalSelector,
+                "aNodes": aNods,
+                "distance": finalDist
+            };
         }
     }
 
@@ -727,6 +458,8 @@ var Evaluator = function() {
                                 if(valUIProp !== null && valUIProp !== undefined) {
                                     if(!vyperUtil.isString(valUIProp)) {
                                         setFields[key] = valUIProp.toString();
+                                    } else {
+                                        setFields[key] = valUIProp;
                                     }
                                 }
                                 let selector = queryBuilder.buildSelector(setFields, propLevel, oSelector, parentPropType, parentLevel);
@@ -737,7 +470,8 @@ var Evaluator = function() {
                                     return {
                                         "success": true,
                                         "selector": selector,
-                                        "aNodes": aFoundNodes
+                                        "aNodes": aFoundNodes,
+                                        "distance": distance1
                                     };
                                 } else {
                                     if(distance1 < distance) {
@@ -795,7 +529,8 @@ var Evaluator = function() {
                             return {
                                 "success": true,
                                 "selector": selector,
-                                "aNodes": aFoundNodes
+                                "aNodes": aFoundNodes,
+                                "distance": distance1
                             };
                         } else {
                             if(distance1 < distance) {
@@ -830,10 +565,13 @@ var Evaluator = function() {
         }
     }
 
-    this.getElementImportantProps = function(oElemProperties, existingFields, propType, elemId) {
+    this.getElementImportantProps = function(oElemProperties, existingFields, propType, elemId, dist) {
         if(!oElemProperties) return null;
         var includedFields = {};
         var selector = {};
+        var finalSelector= null;
+        var finalDist = dist || 99;
+        var elemDist = 999;
         // Add view Name if exists
         const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
         if(viewName) {
@@ -849,6 +587,33 @@ var Evaluator = function() {
                  includedFields["id"] = this.wildCardIdsViewName(id, viewId);
              }
          }
+
+         if(Object.keys(includedFields).length > 1) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
+            selector = queryBuilder.buildSelector(existingFields, "elementProperties");
+            if(selector.elementProperties){
+                selector = queryBuilder.buildSelector(includedFields, propType, selector);
+            }
+            aFoundNodes = ui5All(selector);
+        }
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
+            // Success
+            return {
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
+            };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
+        }
+
         // Evaluate bindingContextPath
         let bindingContextPath = null;
         if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
@@ -856,6 +621,32 @@ var Evaluator = function() {
             bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
             if(bindingContextPath) {
                 includedFields["bindingContextPath"] = bindingContextPath;
+            }
+            if(Object.keys(includedFields).length > 1) {
+                // If bindingContextPath & at least one bindingProperty (test ui5All)
+                selector = queryBuilder.buildSelector(existingFields, "elementProperties");
+                if(selector.elementProperties){
+                    selector = queryBuilder.buildSelector(includedFields, propType, selector);
+                }
+                aFoundNodes = ui5All(selector);
+            }
+            
+            elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+            if(aFoundNodes &&  elemDist === 0) {
+                // Success
+                return {
+                    "success": true,
+                    "selector": selector,
+                    "aNodes": aFoundNodes,
+                    "fieldsMap": includedFields,
+                    "distance": elemDist
+                };
+            }
+    
+            if(elemDist < finalDist){
+                finalSelector={};
+                Object.assign(finalSelector, selector);
+                finalDist = elemDist;
             }
         }
 
@@ -875,13 +666,23 @@ var Evaluator = function() {
             }
             aFoundNodes = ui5All(selector);
         }
-        if(aFoundNodes && vyperUtil.distanceNode(aFoundNodes, elemId) === 0) {
+        
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
             // Success
             return {
                 "success": true,
                 "selector": selector,
-                "aNodes": aFoundNodes
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
             };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
         }
 
         const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
@@ -927,51 +728,70 @@ var Evaluator = function() {
         }
 
         if(Object.keys(includedFields).length > 1) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(existingFields, "elementProperties");
             if(selector.elementProperties){
                 selector = queryBuilder.buildSelector(includedFields, propType, selector);
             }
             aFoundNodes = ui5All(selector);
         }
-        let dist = vyperUtil.distanceNode(aFoundNodes, elemId);
-        if(aFoundNodes && dist === 0) {
+        
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
             // Success
             return {
                 "success": true,
                 "selector": selector,
-                "aNodes": aFoundNodes
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
             };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
         }
 
         //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
         // Check no UI5 property and binding property
         const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
-        retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, selector, prefUIProps, propType, null, dist, elemId);
+        retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, propType, null, finalDist, elemId);
         
-        let dist2 = vyperUtil.distanceNode(retObject.aNodes, elemId);
-        if(retObject.aNodes && dist2 === 0) {
+        elemDist = retObject.distance;
+        if(retObject.aNodes && elemDist === 0) {
             // Success
             return retObject;
-        }
+        } else {
+            let fieldMp = includedFields;
+            let aNods = aFoundNodes;
+            if(elemDist < finalDist){
+                finalSelector={};
+                Object.assign(finalSelector, retObject.selector);
+                finalDist = elemDist;
+                fieldMp = retObject.fieldsMap;
+                aNods = retObject.aNodes;
+            }
 
-        if(dist2 >= dist) {
+            // Didnt succeed
             return {
                 "success": false,
-                "fieldsMap": includedFields,
-                "selector": selector,
-                "aNodes": aFoundNodes,
-                "distance": dist
+                "fieldsMap": fieldMp,
+                "selector": finalSelector,
+                "aNodes": aNods,
+                "distance": finalDist
             };
         }
-
-        // Didnt succeed
-        return retObject;
     }
 
-    this.getElementNestedImportantProps = function(oElemProperties, oSelector, propType, parentPropType, elemId, parentLevel) {
+    this.getElementNestedImportantProps = function(oElemProperties, oSelector, propType, parentPropType, elemId, parentLevel, dist) {
         if(!oElemProperties) return null;
         var includedFields = {};
         var selector = {};
+        var finalSelector= null;
+        var finalDist = dist || 99;
+        var elemDist = 999;
         // Add view Name if exists
         const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
         if(viewName) {
@@ -987,6 +807,30 @@ var Evaluator = function() {
                 includedFields["id"] = this.wildCardIdsViewName(id, viewId);
             }
         }
+
+        if(Object.keys(includedFields).length > 1) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
+            selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
+            aFoundNodes = ui5All(selector);
+        }
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
+            // Success
+            return {
+                "success": true,
+                "selector": selector,
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
+            };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
+        }
+
         // Evaluate bindingContextPath
         let bindingContextPath = null;
         if(oElemProperties.bindingContextPath && oElemProperties.bindingContextPath.length > 0) {
@@ -994,6 +838,29 @@ var Evaluator = function() {
             bindingContextPath = this.evaluateBindingContextPath(oElemProperties.bindingContextPath[0].bindingContextPath);
             if(bindingContextPath) {
                 includedFields["bindingContextPath"] = bindingContextPath;
+            }
+
+            if(Object.keys(includedFields).length > 1) {
+                // If bindingContextPath & at least one bindingProperty (test ui5All)
+                selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
+                aFoundNodes = ui5All(selector);
+            }
+            elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+            if(aFoundNodes &&  elemDist === 0) {
+                // Success
+                return {
+                    "success": true,
+                    "selector": selector,
+                    "aNodes": aFoundNodes,
+                    "fieldsMap": includedFields,
+                    "distance": elemDist
+                };
+            }
+    
+            if(elemDist < finalDist){
+                finalSelector={};
+                Object.assign(finalSelector, selector);
+                finalDist = elemDist;
             }
         }
 
@@ -1009,13 +876,22 @@ var Evaluator = function() {
             selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
             aFoundNodes = ui5All(selector);
         }
-        if(aFoundNodes && vyperUtil.distanceNode(aFoundNodes, elemId) === 0) {
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
             // Success
             return {
                 "success": true,
                 "selector": selector,
-                "aNodes": aFoundNodes
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
             };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
         }
 
         const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
@@ -1061,42 +937,57 @@ var Evaluator = function() {
         }
 
         if(Object.keys(includedFields).length > 1) {
+            // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
             aFoundNodes = ui5All(selector);
         }
-        let dist = vyperUtil.distanceNode(aFoundNodes, elemId);
-        if(aFoundNodes && dist === 0) {
+        elemDist = vyperUtil.distanceNode(aFoundNodes, elemId);
+        if(aFoundNodes &&  elemDist === 0) {
             // Success
             return {
                 "success": true,
                 "selector": selector,
-                "aNodes": aFoundNodes
+                "aNodes": aFoundNodes,
+                "fieldsMap": includedFields,
+                "distance": elemDist
             };
+        }
+
+        if(elemDist < finalDist){
+            finalSelector={};
+            Object.assign(finalSelector, selector);
+            finalDist = elemDist;
         }
 
         //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
         // Check no UI5 property and binding property
         const prefUIProps = ["src", "icon", "value", "text", "tooltip", "title"];
-        retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, selector, prefUIProps, propType, parentPropType, dist, elemId, parentLevel);
-        
-        let dist2 = vyperUtil.distanceNode(retObject.aNodes, elemId);
-        if(retObject.aNodes && dist2 === 0) {
+        retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, propType, parentPropType, finalDist, elemId, parentLevel);
+
+        elemDist = retObject.distance;
+        if(retObject.aNodes && elemDist === 0) {
             // Success
             return retObject;
-        }
+        } else {
+            let fieldMp = includedFields;
+            let aNods = aFoundNodes;
+            if(elemDist < finalDist){
+                finalSelector={};
+                Object.assign(finalSelector, retObject.selector);
+                finalDist = elemDist;
+                fieldMp = retObject.fieldsMap;
+                aNods = retObject.aNodes;
+            }
 
-        if(dist2 >= dist) {
+            // Didnt succeed
             return {
                 "success": false,
-                "fieldsMap": includedFields,
-                "selector": selector,
-                "aNodes": aFoundNodes,
-                "distance": dist
+                "fieldsMap": fieldMp,
+                "selector": finalSelector,
+                "aNodes": aNods,
+                "distance": finalDist
             };
         }
-
-        // Didnt succeed
-        return retObject;
     }
 
     this.selectorDist = {
@@ -1164,6 +1055,7 @@ var Evaluator = function() {
         } else {
             enhancedFields = {};
         }
+    
         oRes = this.exploreDescendantsRecurs(sControlId, aDescendentProps, enhancedFields, selector, parentPropType);
         return oRes;
     }
