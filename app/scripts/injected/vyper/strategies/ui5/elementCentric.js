@@ -110,7 +110,9 @@ sap.ui.require([
     "sap/m/MultiInput"
 ], function(ListItemBase, Row, Item, MenuItemBase, Menu, NavigationList, ComboBoxBase, ListBase, Table, MultiInput) {
 var vyperUtil = require('../../utils/vyperUtil');
+var ui5All = require('../../utils/vyperLocator');
 var evaluator = require('../../utils/selectorEvaluators');
+var deepExtend = require('deep-extend');
 var ElementCentricStrategy = function() {
 
     this.checkAggregationElement = function(oControl) {
@@ -215,54 +217,201 @@ var ElementCentricStrategy = function() {
     }
 
     this.getOptSelectors = function(sControlId) {
-        var oRes = [];
+        var oRes = {};
         var oResPar1 = [];
         if(!sControlId) return {};
         let oElemProperties = vyperUtil.getAllElementProperties(sControlId);
+        if(!oElemProperties) return {};
         let oAggrElement = this.checkIfAggrOrDescendantElem(oElemProperties);
         let oAggrElementBwt = this.checkIfBwtAggrAndAggrElem(oElemProperties);
         let oAggrElementExactly = this.checkIfAggregationExactly(oElemProperties);
         if(oAggrElement){
             // CASE 1
+            let finalRes = {};
             oRes = evaluator.evalElementProperties(oElemProperties, true, false, false);
             if(oRes.success){
                 return oRes.selector;
             }
+            Object.assign(finalRes, oRes);
+
+            let oRes1 = {};
+            let oRes2 = {};
+            let oRes3 = {};
+            if(oRes.fieldsMap && oElemProperties) {
+                // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(sControlId);
+                const currentId = vyperUtil.getKeyValue(oAncestorProperties.ui5Properties, "id");
+                const elmId = oAggrElement.getId();
+                if(elmId !== currentId) {
+                    evaluator.selectorDist = {
+                        "success": false,
+                        "distance": 999,
+                        "fieldsMap": oRes.fieldsMap,
+                        "selector": {},
+                        "aNodes": []
+                    };
+                    oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 5, elmId);
+                    if(oRes1.success){
+                        return oRes1.selector;
+                    }
+                    if(oRes1.distance < finalRes.distance){
+                        finalRes={};
+                        Object.assign(finalRes, oRes1);
+                    }
+                }
+             }
+
+             if(oRes.fieldsMap && oElemProperties) {
+                // check descendant use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(sControlId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oRes2 = evaluator.evalDescendantProperties(sControlId, oRes.fieldsMap, aDescendentProps);
+                if(oRes2 && oRes2.success){
+                 return oRes2.selector;
+                }
+                if(oRes2.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oRes2);
+                }
+            }
+
+            if(oRes.fieldsMap && oElemProperties) {
+                // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
+                if(oRes3 && oRes3.success){
+                 return oRes3.selector;
+                }
+                if(oRes3.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oRes3);
+                }
+            }
+
+            if(oRes && oRes1 && oRes2 && oRes.selector && 
+                oRes1.selector && oRes2.selector){
+                //Check combi
+                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let aCandNodes = ui5All(oSel);
+                let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
+                if(aCandNodes && distComp === 0) {
+                    return oSel;
+                }
+                if(distComp < finalRes.distance){
+                    finalRes.success = false;
+                    finalRes.selector = oSel;
+                    finalRes.distance = distComp;
+                    finalRes.aNodes = aCandNodes;
+                }
+
+            }
+
+            if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
+                oRes1.selector && oRes2.selector && oRes3.selector){
+                //Check combi
+                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                aCandNodes = ui5All(oSel);
+                let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
+                if(aCandNodes && distComp === 0) {
+                    return oSel;
+                }
+                if(distComp < finalRes.distance){
+                    finalRes.success = false;
+                    finalRes.selector = oSel;
+                    finalRes.distance = distComp;
+                    finalRes.aNodes = aCandNodes;
+                }
+            }
+        
             //Get aggregation & direct ancestor props
             if(oRes.fieldsMap && oAggrElement  && oElemProperties) {
-                //let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
                 let oAncestorProperties = vyperUtil.getNextAncestorProperties(oAggrElement.getId());
                 let oAncestorElemProperties = vyperUtil.getAllElementProperties(oAggrElement.getId());
-                oResPar1 = evaluator.evalAncestorAggrElmProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties, oAncestorElemProperties);
+                oResPar1 = evaluator.evalAncestorAggrElmProperties(finalRes.selector, oElemProperties, oAncestorElemProperties, oAncestorProperties);
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
-            } else {
-                oResPar1.fieldsMap = oRes.fieldsMap;
-            }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
+                }
+            } 
             //Get direct descendant recursively until null
-            if(oResPar1.fieldsMap && oElemProperties) {
-                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
-                oResPar1 = evaluator.evalDescendantAggrProperties(oResPar1.fieldsMap, oElemProperties, aDescendentProps);
-                if(oResPar1.success){
+            if(oRes.fieldsMap && oElemProperties) {
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(sControlId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oResPar1 = evaluator.evalDescendantProperties(sControlId, oRes.fieldsMap, aDescendentProps, finalRes.selector);
+                if(oResPar1 && oResPar1.success){
                     return oResPar1.selector;
+                }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
                 }
             }
             // Get ancestor instanceof aggregation element and then get descentants recursively, no current control, select base on ui5 property value
             if(oAggrElement && oRes.fieldsMap && oElemProperties) {
                 let oAncestorElemProperties = vyperUtil.getAllElementProperties(oAggrElement.getId());
-                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oAncestorProperties.ui5Properties.id);
-                oRes = evaluator.evalAncestorWithDescProperties(oRes.fieldsMap, oElemProperties, oAncestorElemProperties, aDescendentProps);
-                if(oRes.success){
-                    return oRes.selector;
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(oAggrElement.getId());
+                const elmId = vyperUtil.getKeyValue(oAncestorElemProperties.ui5Properties, "id");
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(elmId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oResPar1 = evaluator.evalAncestorWithDescProperties(oRes.fieldsMap, oElemProperties, oAncestorElemProperties, oAncestorProperties, aDescendentProps);
+                if(oResPar1.success){
+                    return oResPar1.selector;
+                }
+            }
+            // Retry with legacy selector
+            // Get ancestor instanceof aggregation element and then get descentants recursively, no current control, select base on ui5 property value
+            if(oAggrElement && oRes.fieldsMap && oElemProperties) {
+                let oAncestorElemProperties = vyperUtil.getAllElementProperties(oAggrElement.getId());
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(oAggrElement.getId());
+                const elmId = vyperUtil.getKeyValue(oAncestorElemProperties.ui5Properties, "id");
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(elmId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                let parentLevel = null;
+                if(finalRes.selector["ancestorProperties"]) {
+                    parentLevel = 1;
+                    if(finalRes.selector["ancestorProperties"]["ancestorProperties"]) {
+                        parentLevel = 2;
+                    }
+                }
+                oResPar1 = evaluator.evalAncestorWithDescProperties(finalRes.fieldsMap, oElemProperties, oAncestorElemProperties, oAncestorProperties, aDescendentProps, finalRes.selector, parentLevel);
+                if(oResPar1.success){
+                    return oResPar1.selector;
                 }
             }
             // Use index as fallback [use index as property]
-            oRes = evaluator.getIndex(oRes.fieldsMap, oElemProperties);
-            if(oRes.success){
+            let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+            if(oResIdx.success){ 
+                oRes.selector.elementProperties["index"] = oResIdx.index;
                 return oRes.selector;
             }
-            // Finished 
+            // Finished nothing found [TODO Fallback --> Try with domProperties? -> Give back all the selectors? ]
             return oRes.selector;
         } else if(oAggrElementBwt) {
             // CASE 2
@@ -274,38 +423,53 @@ var ElementCentricStrategy = function() {
             if(oRes.fieldsMap && oAggrElementBwt) {
                // check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
                let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementBwt.getId());
-               oRes = evaluator.evalBwtAncestorProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
-               if(oRes.success){
-                return oRes.selector;
+               evaluator.selectorDist = {
+                "success": false,
+                "distance": 999,
+                "fieldsMap": oRes.fieldsMap,
+                "selector": {},
+                "aNodes": []
+                };
+               let oResB1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties);
+               if(oResB1.success){
+                return oResB1.selector;
                }
             }
 
             if(oRes.fieldsMap && oElemProperties) {
-                // check descendant use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
-                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalBwtDescendantProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
-                if(oRes.success){
-                 return oRes.selector;
+                // check descendant up untill null use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(sControlId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                let oResB2 = evaluator.evalDescendantProperties(sControlId, oRes.fieldsMap, aDescendentProps);
+                if(oResB2 && oResB2.success){
+                 return oResB2.selector;
                 }
             }
 
             if(oRes.fieldsMap && oElemProperties) {
-                // check descendant use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalBwtSiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
-                if(oRes.success){
-                 return oRes.selector;
+                // check siblings use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                let oResB3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
+                if(oResB3 && oResB3.success){
+                 return oResB3.selector;
                 }
             }
-
              // Use index as fallback [use index as property]
-             oRes = evaluator.getIndex(oRes.fieldsMap, oElemProperties);
-             if(oRes.success){
+             let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+             if(oResIdx.success){ 
+                 oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
              }
             // Finished 
             return oRes.selector;
         } else if(oAggrElementExactly) {
+            if(!oElemProperties) return {};
             // CASE 3
             oRes = evaluator.evalElementProperties(oElemProperties, true, false, true);
             if(oRes.success){
@@ -315,7 +479,14 @@ var ElementCentricStrategy = function() {
             if(oRes.fieldsMap && oAggrElementExactly) {
                 // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
                 let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementExactly.getId());
-                oRes = evaluator.evalExactlyAncestorsProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oRes = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties);
                 if(oRes.success){
                  return oRes.selector;
                 }
@@ -323,8 +494,15 @@ var ElementCentricStrategy = function() {
 
              if(oRes.fieldsMap && oElemProperties) {
                 // check descendant use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
-                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalExactlyDescentantsProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(sControlId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oRes = evaluator.evalDescendantProperties(sControlId, oRes.fieldsMap, aDescendentProps);
                 if(oRes.success){
                  return oRes.selector;
                 }
@@ -332,15 +510,8 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalExactlySiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
-                if(oRes.success){
-                 return oRes.selector;
-                }
-            }
- 
-            if(oRes.fieldsMap && oElemProperties) {
-                oRes = evaluator.evalUIPropertiesForElement(oRes.fieldsMap, oElemProperties);
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                oRes = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
                 if(oRes.success){
                  return oRes.selector;
                 }
@@ -348,36 +519,75 @@ var ElementCentricStrategy = function() {
             // Finished 
             return oRes.selector;
         } else {
+            let oRes1 = {};
+            let oRes2 = {};
+            let oRes3 = {};
             // No agregation element
             oRes = evaluator.evalElementProperties(oElemProperties, false, false, false);
             if(oRes.success){
                 return oRes.selector;
-            } 
+            }
 
-            if(oRes.fieldsMap && oAggrElementExactly) {
+            if(oRes.fieldsMap && oElemProperties) {
                 // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
                 let oAncestorProperties = vyperUtil.getNextAncestorProperties(sControlId);
-                oRes = evaluator.evalAncestorsProperties(oRes.fieldsMap, oElemProperties, oAncestorProperties);
-                if(oRes.success){
-                 return oRes.selector;
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties);
+                if(oRes1.success){
+                 return oRes1.selector;
                 }
              }
 
              if(oRes.fieldsMap && oElemProperties) {
                 // check descendant use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
-                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalDescentantsProperties(oRes.fieldsMap, oElemProperties, aDescendentProps);
-                if(oRes.success){
-                 return oRes.selector;
+                let aDescendentProps = vyperUtil.getAllDescendantElementsProps(sControlId);
+                evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                };
+                oRes2 = evaluator.evalDescendantProperties(sControlId, oRes.fieldsMap, aDescendentProps);
+                if(oRes2.success){
+                 return oRes2.selector;
                 }
             }
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(oElemProperties.ui5Properties.id);
-                oRes = evaluator.evalSiblingsProperties(oRes.fieldsMap, oElemProperties, aSiblingsProps);
-                if(oRes.success){
-                 return oRes.selector;
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
+                if(oRes3.success){
+                 return oRes3.selector;
+                }
+            }
+
+            
+            if(oRes && oRes1 && oRes2 && oRes.selector && 
+                oRes1.selector && oRes2.selector){
+                //Check combi
+                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let aCandNodes = ui5All(oSel);
+                if(aCandNodes && vyperUtil.distanceNode(aCandNodes, id) === 0) {
+                    return oSel;
+                }
+
+            }
+
+            if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
+                oRes1.selector && oRes2.selector && oRes3.selector){
+                //Check combi
+                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                aCandNodes = ui5All(oSel);
+                if(aCandNodes && vyperUtil.distanceNode(aCandNodes, id) === 0) {
+                    return oSel;
                 }
             }
 

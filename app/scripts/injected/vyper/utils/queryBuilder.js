@@ -1,7 +1,13 @@
 
 var QueryBuilder = function() {
-    this.buildSelector = function(statement, propsType) {
-        var oSelector = {};
+    this.buildSelector = function(statement, propsType, existingSelector, parentPropsType, parentLevel) {
+        var newSelectorCompl = {};
+        if(existingSelector) {
+            Object.assign(newSelectorCompl, existingSelector);
+        } else {
+            newSelectorCompl = {};
+        }
+        //Reset values
         if(statement && propsType) {
             // Lookup keys of statements
             let keys = Object.keys(statement);
@@ -31,9 +37,22 @@ var QueryBuilder = function() {
                     }
                 }
             }
-            oSelector.elementProperties = oSelectProps;
+            if(parentPropsType) {
+                if(!parentLevel) {
+                    newSelectorCompl[parentPropsType][propsType] = oSelectProps;
+                } else {
+                    let selectorLevel = newSelectorCompl[parentPropsType];
+                    for (let index = 0; index < parentLevel - 1; index++) {
+                        selectorLevel = selectorLevel[parentPropsType];
+                    }
+                    selectorLevel[propsType] = oSelectProps;
+                }
+                
+            } else {
+                newSelectorCompl[propsType] = oSelectProps;
+            }
         }
-        return oSelector;
+        return newSelectorCompl;
     }
 };
 window.QueryBuilder = new QueryBuilder();
