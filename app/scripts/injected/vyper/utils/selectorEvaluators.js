@@ -205,6 +205,7 @@ var Evaluator = function() {
 
     this.evalElementProperties = function(oElemProperties) {
         var includedFields = {};
+        var finalFields = {};
         var aFoundNodes = [];
         var selector = null;
         var finalSelector= null;
@@ -249,6 +250,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = dist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         // Evaluate bindingContextPath
@@ -283,6 +289,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = dist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         // Add bindingProperties [priority i18n!! and title, text, value, and low enabled, editable uxfc/ _fc or fc_ fields,]
@@ -315,6 +326,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = dist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
@@ -370,6 +386,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = dist2;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
@@ -612,6 +633,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         // Evaluate bindingContextPath
@@ -647,6 +673,11 @@ var Evaluator = function() {
                 finalSelector={};
                 Object.assign(finalSelector, selector);
                 finalDist = elemDist;
+                finalFields = {};
+                Object.assign(finalFields, includedFields);
+            } else {
+                includedFields = {};
+                Object.assign(includedFields, finalFields);
             }
         }
 
@@ -683,6 +714,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
@@ -752,6 +788,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
@@ -829,6 +870,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         // Evaluate bindingContextPath
@@ -861,6 +907,11 @@ var Evaluator = function() {
                 finalSelector={};
                 Object.assign(finalSelector, selector);
                 finalDist = elemDist;
+                finalFields = {};
+                Object.assign(finalFields, includedFields);
+            } else {
+                includedFields = {};
+                Object.assign(includedFields, finalFields);
             }
         }
 
@@ -892,6 +943,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         const labelForId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "labelFor");
@@ -957,6 +1013,11 @@ var Evaluator = function() {
             finalSelector={};
             Object.assign(finalSelector, selector);
             finalDist = elemDist;
+            finalFields = {};
+            Object.assign(finalFields, includedFields);
+        } else {
+            includedFields = {};
+            Object.assign(includedFields, finalFields);
         }
 
         //Check UI5 properties [no boolean, null, undefined], preferable list [icon, tooltip, text, value, title], [string, number]
