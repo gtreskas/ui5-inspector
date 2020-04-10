@@ -371,7 +371,7 @@ var Evaluator = function() {
             }
         }
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             selector = queryBuilder.buildSelector(includedFields, "elementProperties");
             aFoundNodes = ui5All(selector);
         }
@@ -621,7 +621,7 @@ var Evaluator = function() {
              }
          }
 
-         if(Object.keys(includedFields).length > 1) {
+         if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(existingFields, "elementProperties");
             if(selector.elementProperties){
@@ -660,7 +660,7 @@ var Evaluator = function() {
             if(bindingContextPath) {
                 includedFields["bindingContextPath"] = bindingContextPath;
             }
-            if(Object.keys(includedFields).length > 1) {
+            if(Object.keys(includedFields).length > 0) {
                 // If bindingContextPath & at least one bindingProperty (test ui5All)
                 selector = queryBuilder.buildSelector(existingFields, "elementProperties");
                 if(selector.elementProperties){
@@ -701,7 +701,7 @@ var Evaluator = function() {
         includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);
         
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(existingFields, "elementProperties");
             if(selector.elementProperties){
@@ -778,7 +778,7 @@ var Evaluator = function() {
             includedFields["src"] = src;
         }
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(existingFields, "elementProperties");
             if(selector.elementProperties){
@@ -865,7 +865,7 @@ var Evaluator = function() {
             }
         }
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
             aFoundNodes = ui5All(selector);
@@ -902,7 +902,7 @@ var Evaluator = function() {
                 includedFields["bindingContextPath"] = bindingContextPath;
             }
 
-            if(Object.keys(includedFields).length > 1) {
+            if(Object.keys(includedFields).length > 0) {
                 // If bindingContextPath & at least one bindingProperty (test ui5All)
                 selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
                 aFoundNodes = ui5All(selector);
@@ -938,7 +938,7 @@ var Evaluator = function() {
         const prefProps = ["value", "text", "tooltip", "title","items"];
         includedFields["bindingPropertyPaths"] = this.filterBindingProperties(oElemProperties.bindingPropertyPaths, exclProps, exclPaterns, aExclTypes, prefProps);
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
             aFoundNodes = ui5All(selector);
@@ -1011,7 +1011,7 @@ var Evaluator = function() {
             includedFields["src"] = src;
         }
 
-        if(Object.keys(includedFields).length > 1) {
+        if(Object.keys(includedFields).length > 0) {
             // If bindingContextPath & at least one bindingProperty (test ui5All)
             selector = queryBuilder.buildSelector(includedFields, propType, oSelector, parentPropType, parentLevel);
             aFoundNodes = ui5All(selector);
@@ -1185,7 +1185,7 @@ var Evaluator = function() {
             const ancElemId = vyperUtil.getKeyValue(oAncestorElemProperties.ui5Properties, "id");
         // Case 1 Element is a desc of Ancestor element --> [Opt: Get Ancestor] Get ancestor element + get all descendants except element and control in depth
             if(elemId !== ancElemId) {
-                if(!parentLevel || parentLevel <= 1) {
+                if(!parentLevel) {
                     // Element is under a aggregation element - try
                     oRes1 = this.getElementImportantProps(oAncestorElemProperties, enhancedFields, "ancestorProperties", elemId);
                     if(oRes1.success) {
@@ -1202,7 +1202,7 @@ var Evaluator = function() {
                 } */
                 
             } else {
-                if(!parentLevel || parentLevel <= 1) {
+                if(!parentLevel) {
                     oRes1 = this.getElementImportantProps(oAncestorProperties, enhancedFields, "ancestorProperties", elemId);
                     if(oRes1.success) {
                         return oRes1;
@@ -1224,7 +1224,7 @@ var Evaluator = function() {
                     filtDescentantProps.push(descend);
                 } 
             }
-            if(!parentLevel || parentLevel <= 1) {
+            if(!parentLevel) {
                 // Check descendants
                 oRes2 = this.exploreDescendantsRecurs(elemId, filtDescentantProps, oRes1.fieldsMap, oRes1.selector, "ancestorProperties");
                 if(oRes2 && oRes2.success) {
