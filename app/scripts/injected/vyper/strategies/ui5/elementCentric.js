@@ -97,7 +97,7 @@ if (matches != null) {
     alert('number');
 }
 */
-sap.ui.require([
+/*sap.ui.require([
     "sap/m/ListItemBase",
     "sap/ui/table/Row",
     "sap/ui/core/Item",
@@ -108,7 +108,7 @@ sap.ui.require([
     "sap/m/ListBase",
     "sap/ui/table/Table",
     "sap/m/MultiInput"
-], function(ListItemBase, Row, Item, MenuItemBase, Menu, NavigationList, ComboBoxBase, ListBase, Table, MultiInput) {
+], function(ListItemBase, Row, Item, MenuItemBase, Menu, NavigationList, ComboBoxBase, ListBase, Table, MultiInput) {*/
 var vyperUtil = require('../../utils/vyperUtil');
 var ui5All = require('../../utils/vyperLocator');
 var evaluator = require('../../utils/selectorEvaluators');
@@ -117,20 +117,26 @@ var ElementCentricStrategy = function() {
 
     this.checkAggregationElement = function(oControl) {
         if(!oControl) return false;
-        return oControl instanceof ListItemBase ||
-        oControl instanceof Row ||
-        oControl instanceof Item ||
-        oControl instanceof MenuItemBase ||
-        oControl instanceof Menu;
+        return sap && 
+            (sap.m && oControl instanceof sap.m.ListItemBase) ||
+            (sap.ui && sap.ui.table && oControl instanceof sap.ui.table.Row) ||
+            (sap.ui && sap.ui.core && oControl instanceof sap.ui.core.Item) ||
+            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.MenuItemBase) ||
+            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.Menu) ||
+            (sap.m  && oControl instanceof sap.m.Token);
     }
 
     this.checkAggregation = function(oControl) {
         if(!oControl) return false;
-        return oControl instanceof NavigationList ||
-        oControl instanceof ComboBoxBase ||
-        oControl instanceof ListBase ||
-        oControl instanceof Table ||
-        oControl instanceof MultiInput;
+        return sap &&  
+            (sap.tnt && oControl instanceof sap.tnt.NavigationList) ||
+            (sap.m && oControl instanceof sap.m.ComboBoxBase) ||
+            (sap.m && oControl instanceof sap.m.ListBase) ||
+            (sap.ui && sap.ui.table && oControl instanceof sap.ui.table.Table) ||
+            (sap.m && oControl instanceof sap.m.MultiInput) ||
+            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.MenuItemBase) ||
+            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.Menu) ||
+            (sap.m  && oControl instanceof sap.m.Tokenizer);
     }
 
     this.recursiveCheckDescendantOfAggregation = function(oControl) {
@@ -395,6 +401,7 @@ var ElementCentricStrategy = function() {
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
+                
             }
             // Retry with legacy selector
             // Get ancestor instanceof aggregation element and then get descentants recursively, no current control, select base on ui5 property value
@@ -445,22 +452,26 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oAggrElementBwt) {
                // check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
-               let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementBwt.getId());
-               evaluator.selectorDist = {
-                "success": false,
-                "distance": 999,
-                "fieldsMap": oRes.fieldsMap,
-                "selector": {},
-                "aNodes": []
-                };
-               oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 3);
-               if(oRes1.success){
-                return oRes1.selector;
+               let oAncestorProperties = vyperUtil.getAllElementProperties(sControlId);
+               const currentId = vyperUtil.getKeyValue(oAncestorProperties.ui5Properties, "id");
+               const elmId = oAggrElement.getId();
+               if(elmId !== currentId) {
+                    evaluator.selectorDist = {
+                    "success": false,
+                    "distance": 999,
+                    "fieldsMap": oRes.fieldsMap,
+                    "selector": {},
+                    "aNodes": []
+                    };
+                   oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 5, elmId);
+                   if(oRes1.success){
+                    return oRes1.selector;
+                   }
+                   if(oRes1.distance < finalRes.distance){
+                        finalRes={};
+                        Object.assign(finalRes, oRes1);
+                    }
                }
-               if(oRes1.distance < finalRes.distance){
-                    finalRes={};
-                    Object.assign(finalRes, oRes1);
-                }
             }
 
             if(oRes.fieldsMap && oElemProperties) {
@@ -620,7 +631,7 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oAggrElementExactly) {
                 // check ancestor use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
-                let oAncestorProperties = vyperUtil.getAllElementProperties(oAggrElementExactly.getId());
+                let oAncestorProperties = vyperUtil.getNextAncestorProperties(sControlId);
                 evaluator.selectorDist = {
                     "success": false,
                     "distance": 999,
@@ -628,7 +639,7 @@ var ElementCentricStrategy = function() {
                     "selector": {},
                     "aNodes": []
                 };
-                oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 3);
+                oRes1 = evaluator.evalAncestorProperties(sControlId, oRes.fieldsMap, oAncestorProperties, 5);
                 if(oRes1.success){
                  return oRes1.selector;
                 }
@@ -874,4 +885,4 @@ var ElementCentricStrategy = function() {
 };
 window.ElementCentricStrategy = new ElementCentricStrategy();
 module.exports = window.ElementCentricStrategy;
-});
+//});
