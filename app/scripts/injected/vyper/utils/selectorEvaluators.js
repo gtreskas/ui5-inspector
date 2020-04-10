@@ -1,4 +1,3 @@
-var deepExtend = require('deep-extend');
 var vyperUtil = require('./vyperUtil');
 var ui5All = require('./vyperLocator');
 var queryBuilder = require('./queryBuilder');
@@ -162,11 +161,14 @@ var Evaluator = function() {
         return aBindingProps;
     }
 
-    this.wildCardIdsViewName = function(id, viewId) {
+    this.wildCardIdsViewName = function(id, viewId, compId) {
         let elmId = id;
-        if(elmId && viewId) {
-            if(elmId.indexOf(viewId) !== -1){
+        if(elmId && (viewId || compId)) {
+            if(viewId && elmId.indexOf(viewId) !== -1){
                 elmId = id.replace(viewId, "");
+            }
+            if(compId && elmId.indexOf(compId) !== -1){
+                elmId = id.replace(compId, "");
             }
             if(elmId) {
                 // Remove ---
@@ -224,7 +226,8 @@ var Evaluator = function() {
         if(id) {
             if(!vyperUtil.isIdGeneric(id)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                includedFields["id"] = this.wildCardIdsViewName(id, viewId);
+                const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
+                includedFields["id"] = this.wildCardIdsViewName(id, viewId, compId);
             }
         }
 
@@ -337,18 +340,20 @@ var Evaluator = function() {
         if(labelForId){
             if(!vyperUtil.isIdGeneric(labelForId)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
+                const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
+                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId, compId);
                 }  
         }
 
         const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
         if(ariaLabelledBy && ariaLabelledBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaLabelledBy.length; index++) {
                 const elemId = ariaLabelledBy[index];
                 if(!vyperUtil.isIdGeneric(elemId)) {
                     if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId));
+                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId, viewId, compId));
                     }   
             }
         }
@@ -356,11 +361,12 @@ var Evaluator = function() {
         const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
         if(ariaDescribedBy && ariaDescribedBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaDescribedBy.length; index++) {
                 const elemId = ariaDescribedBy[index];
                 if(!vyperUtil.isIdGeneric(elemId)) {
                     if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId));
+                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId, viewId, compId));
                     }   
             }
         }
@@ -428,6 +434,8 @@ var Evaluator = function() {
         let addFields = {};
         if(!distance)  distance = 99;
         if(ui5Properties) {
+            const viewId = vyperUtil.getKeyValue(ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(ui5Properties, "componentId");
             Object.assign(addFields, includedFields);
             let uiSanProps = [];
             for (let index = 0; index < ui5Properties.length; index++) {
@@ -455,6 +463,9 @@ var Evaluator = function() {
                         //valUIProp !== "false" && valUIProp !== "true" && 
                         uiPropKey !== "id" &&
                         uiPropKey !== "ariaDescribedBy" &&
+                        uiPropKey !== "labelFor" &&
+                        uiPropKey !== "icon" &&
+                        uiPropKey !== "src" &&
                         uiPropKey !== "ariaLabelledBy" &&
                         uiPropKey !== "selectedItems" &&
                         uiPropKey !== "viewId" &&
@@ -528,8 +539,8 @@ var Evaluator = function() {
                                         elemId = valUIProp[i].toString();
                                     }
                                 }
-                                if(!vyperUtil.isIdGeneric(elemId)) {
-                                    aNewValProp.push(elemId);
+                                if(!vyperUtil.isIdGeneric(elemId)) {             
+                                    aNewValProp.push(this.wildCardIdsViewName(elemId, viewId, compId));
                                 }
                             }
                             setFields2[key] = aNewValProp;
@@ -603,9 +614,10 @@ var Evaluator = function() {
          // Add id
          const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
          const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+         const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
          if(id) {
              if(!vyperUtil.isIdGeneric(id)) {
-                 includedFields["id"] = this.wildCardIdsViewName(id, viewId);
+                 includedFields["id"] = this.wildCardIdsViewName(id, viewId, compId);
              }
          }
 
@@ -725,18 +737,20 @@ var Evaluator = function() {
         if(labelForId){
             if(!vyperUtil.isIdGeneric(labelForId)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
+                const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
+                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId, compId);
              }  
         }
 
         const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
         if(ariaLabelledBy && ariaLabelledBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaLabelledBy.length; index++) {
                 const elemId2 = ariaLabelledBy[index];
                 if(!vyperUtil.isIdGeneric(elemId2)) {
                     if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId2, viewId));
+                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId2, viewId, compId));
                  }   
             }
         }
@@ -744,11 +758,12 @@ var Evaluator = function() {
         const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
         if(ariaDescribedBy && ariaDescribedBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaDescribedBy.length; index++) {
                 const elemId2 = ariaDescribedBy[index];
                 if(!vyperUtil.isIdGeneric(elemId2)) {
                     if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId2, viewId));
+                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId2, viewId, compId));
                  }   
             }
         }
@@ -843,9 +858,10 @@ var Evaluator = function() {
         // Add id
         const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
         const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+        const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
         if(id) {
             if(!vyperUtil.isIdGeneric(id)) {
-                includedFields["id"] = this.wildCardIdsViewName(id, viewId);
+                includedFields["id"] = this.wildCardIdsViewName(id, viewId, compId);
             }
         }
 
@@ -954,18 +970,20 @@ var Evaluator = function() {
         if(labelForId){
             if(!vyperUtil.isIdGeneric(labelForId)) {
                 const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
-                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId);
+                const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
+                includedFields["labelFor"] = this.wildCardIdsViewName(labelForId, viewId, compId);
              }  
         }
 
         const ariaLabelledBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaLabelledBy");
         if(ariaLabelledBy && ariaLabelledBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaLabelledBy.length; index++) {
                 const elemId2 = ariaLabelledBy[index];
                 if(!vyperUtil.isIdGeneric(elemId2)) {
                     if(!includedFields["ariaLabelledBy"]) includedFields["ariaLabelledBy"] = [];
-                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId2, viewId));
+                    includedFields["ariaLabelledBy"].push(this.wildCardIdsViewName(elemId2, viewId, compId));
                  }   
             }
         }
@@ -973,11 +991,12 @@ var Evaluator = function() {
         const ariaDescribedBy = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "ariaDescribedBy");
         if(ariaDescribedBy && ariaDescribedBy.length > 0){
             const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
+            const compId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "componentId");
             for (let index = 0; index < ariaDescribedBy.length; index++) {
                 const elemId2 = ariaDescribedBy[index];
                 if(!vyperUtil.isIdGeneric(elemId2)) {
                     if(!includedFields["ariaDescribedBy"]) includedFields["ariaDescribedBy"] = [];
-                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId2, viewId));
+                    includedFields["ariaDescribedBy"].push(this.wildCardIdsViewName(elemId2, viewId, compId));
                  }   
             }
         }
