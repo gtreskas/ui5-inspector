@@ -454,7 +454,7 @@ var ElementCentricStrategy = function() {
                // check ancestor use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
                let oAncestorProperties = vyperUtil.getAllElementProperties(sControlId);
                const currentId = vyperUtil.getKeyValue(oAncestorProperties.ui5Properties, "id");
-               const elmId = oAggrElement.getId();
+               const elmId = oAggrElementBwt.getId();
                if(elmId !== currentId) {
                     evaluator.selectorDist = {
                     "success": false,
