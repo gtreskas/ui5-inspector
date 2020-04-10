@@ -600,6 +600,7 @@ var Evaluator = function() {
     this.getElementImportantProps = function(oElemProperties, existingFields, propType, elemId, dist) {
         if(!oElemProperties) return null;
         var includedFields = {};
+        var finalFields = {};
         var selector = {};
         var finalSelector= null;
         var finalDist = dist || 99;
@@ -844,6 +845,7 @@ var Evaluator = function() {
     this.getElementNestedImportantProps = function(oElemProperties, oSelector, propType, parentPropType, elemId, parentLevel, dist) {
         if(!oElemProperties) return null;
         var includedFields = {};
+        var finalFields = {};
         var selector = {};
         var finalSelector= null;
         var finalDist = dist || 99;
