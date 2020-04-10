@@ -542,7 +542,7 @@ var VyperUtil = function() {
 
     this.addViewForControl = function(oControl, elemProperties) {
         // Get View name
-        if(sap.ui.core.Element && sap.ui.core.mvc.View) {
+        if(sap.ui.core.Element && sap.ui.core.mvc.View && sap.ui.core.UIComponent) {
             var aViews = sap.ui.core.Element.registry.filter(function (oElement) {
                 return oElement instanceof sap.ui.core.mvc.View;
             });
@@ -550,23 +550,23 @@ var VyperUtil = function() {
                 var oView = aViews[index];
                 if(oView.getId() && oControl.getId() &&
                 this.isControlInViewId(oControl, oView.getId())) {
-                var aComponents = [].concat(sap.ui.core.Component.registry.filter(function (oElem) {
-                        return oElem instanceof sap.ui.core.UIComponent;
-                    }));
-                    for (let j = 0; j < aComponents.length; j++) {
-                        const oComponent = aComponents[j];
-                        if(this.isControlInComponentId(oView, oComponent.getId())) {
-                            elemProperties.push({
-                                'componentId': oComponent.getId()
-                            });
-                            break;
-                        }
-                    }
                     elemProperties.push({
                         'viewId': oView.getId()
                     });
                     elemProperties.push({
                         'viewName': oView.getViewName()
+                    });
+                    break;
+                }
+            }
+            var aComponents = [].concat(sap.ui.core.Component.registry.filter(function (oElem) {
+                return oElem instanceof sap.ui.core.UIComponent;
+            }));
+            for (let j = 0; j < aComponents.length; j++) {
+                const oComponent = aComponents[j];
+                if(this.isControlInComponentId(oControl, oComponent.getId())) {
+                    elemProperties.push({
+                        'componentId': oComponent.getId()
                     });
                     return;
                 }
