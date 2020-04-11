@@ -958,7 +958,7 @@ var VyperUtil = function() {
         return this.generateAllControlSelector(oParentControl);
     }
 
-    this.retrieveValidUI5ControlsSubElements = function(nodes, aCandidateControls) {
+    this.retrieveValidUI5ControlsSubElements = function(nodes, aCandidateControls, iMaxCtrl) {
         if (!nodes || nodes.length === 0) {
             //console.log('no node html elements found');
         return aCandidateControls;
@@ -996,6 +996,7 @@ var VyperUtil = function() {
             if (oControl) {
                 //console.log("Control pushed-->" + oControl.getId());
                 //console.log("Control pushed-->"+ oControl.getId());
+                
             aCandidateControls.push(oControl);
             } else {
                 //console.log("Im in else iterate 3 -->" + node.children.length);
@@ -1028,7 +1029,7 @@ var VyperUtil = function() {
         return aPropsForAllDescentants;
     }
 
-    this.findSiblingControls = function(oControl, oParentControl) {
+    this.findSiblingControls = function(oControl, oParentControl, iMaxCtrl) {
         var aValidControls = [];
         var aCandidateControls = [];
         if (!oControl || !oControl.getId || !oControl.getId()) return null;
@@ -1043,17 +1044,20 @@ var VyperUtil = function() {
         if (oControlIndx === -1) { throw new Error("Something is very wrong with prev/next control finder"); }
         else {
         aValidControls.splice(oControlIndx, 1);
+        if(iMaxCtrl) {
+            aValidControls.splice(0, iMaxCtrl);
+        }
         return aValidControls;
         }
     }
 
-    this.getAllSiblingProperties = function(sControlId) {
+    this.getAllSiblingProperties = function(sControlId, iMaxCtrl) {
         var allSiblingsProps = [];
         var allSblControls = [];
         var oParentControl = this.findNextAncestorByControlId(sControlId);
         var oControl = sap.ui.getCore().byId(sControlId);
         if (oControl && oParentControl) {
-            allSblControls = this.findSiblingControls(oControl, oParentControl);
+            allSblControls = this.findSiblingControls(oControl, oParentControl, iMaxCtrl);
         }
         if (!allSblControls || allSblControls.length === 0) return null;
         for (let index = 0; index < allSblControls.length; index++) {

@@ -432,6 +432,7 @@ var Evaluator = function() {
 
     this.filterUIProperties = function(ui5Properties, includedFields, oSelector, prefProps, propLevel, parentPropType, distance, id, parentLevel) {
         let addFields = {};
+        let selector = {};
         if(!distance)  distance = 99;
         if(ui5Properties) {
             const viewId = vyperUtil.getKeyValue(ui5Properties, "viewId");
@@ -494,7 +495,7 @@ var Evaluator = function() {
                                         setFields[key] = valUIProp;
                                     }
                                 }
-                                let selector = queryBuilder.buildSelector(setFields, propLevel, oSelector, parentPropType, parentLevel);
+                                selector = queryBuilder.buildSelector(setFields, propLevel, oSelector, parentPropType, parentLevel);
                                 let aFoundNodes = ui5All(selector);
                                 let distance1 = vyperUtil.distanceNode(aFoundNodes, id);
                                 if(aFoundNodes && distance1 === 0) {
@@ -508,6 +509,8 @@ var Evaluator = function() {
                                 } else {
                                     if(distance1 < distance) {
                                         distance = distance1;
+                                        oSelector = {};
+                                        Object.assign(oSelector,selector);
                                         includedFields = {};
                                         Object.assign(includedFields, setFields);
                                     } else {
@@ -553,7 +556,7 @@ var Evaluator = function() {
                             }
                             setFields2[key] = elm;
                         }
-                        let selector = queryBuilder.buildSelector(setFields2, propLevel, oSelector, parentPropType, parentLevel);
+                        selector = queryBuilder.buildSelector(setFields2, propLevel, oSelector, parentPropType, parentLevel);
                         let aFoundNodes = ui5All(selector);
                         let distance1 = vyperUtil.distanceNode(aFoundNodes, id);
                         if(aFoundNodes && distance1 === 0) {
@@ -567,6 +570,8 @@ var Evaluator = function() {
                         } else {
                             if(distance1 < distance) {
                                 distance = distance1;
+                                oSelector = {};
+                                Object.assign(oSelector,selector);
                                 includedFields = {};
                                 Object.assign(includedFields, setFields2);
                             } else {
@@ -603,15 +608,17 @@ var Evaluator = function() {
         var finalFields = {};
         var selector = {};
         var finalSelector= null;
-        var finalDist = dist || 99;
-        var elemDist = 999;
+        var finalDist = dist || 999;
+        var elemDist = 99;
+
+        includedFields["metadata"] = oElemProperties.metadata[0].metadata;
         // Add view Name if exists
         const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
         if(viewName) {
             includedFields["viewName"] = viewName;
         }
 
-        includedFields["metadata"] = oElemProperties.metadata[0].metadata;
+        
          // Add id
          const id = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "id");
          const viewId = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewId");
@@ -848,8 +855,8 @@ var Evaluator = function() {
         var finalFields = {};
         var selector = {};
         var finalSelector= null;
-        var finalDist = dist || 99;
-        var elemDist = 999;
+        var finalDist = dist || 999;
+        var elemDist = 99;
         // Add view Name if exists
         const viewName = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "viewName");
         if(viewName) {
