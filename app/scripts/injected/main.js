@@ -6,6 +6,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     var controlUtils = require('../modules/injected/controlUtils.js');
     var rightClickHandler = require('../modules/injected/rightClickHandler.js');
     var applicationUtils = require('../modules/injected/applicationUtils');
+    var vyperElemCentricStrategy = require('./vyper/strategies/ui5/elementCentric');
 
     // Create global reference for the extension.
     ui5inspector.createReferences();
@@ -105,6 +106,11 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
          */
         'do-control-select': function (event) {
             var controlId = event.detail.target;
+            try {
+                console.log(vyperElemCentricStrategy.getOptSelectors(controlId));
+            } catch (error) {
+                console.log(error);
+            }
             var controlProperties = ToolsAPI.getControlProperties(controlId);
             var controlBindings = ToolsAPI.getControlBindings(controlId);
             var controlAggregations = ToolsAPI.getControlAggregations(controlId);

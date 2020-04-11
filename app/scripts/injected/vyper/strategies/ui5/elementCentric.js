@@ -97,6 +97,7 @@ if (matches != null) {
     alert('number');
 }
 */
+
 /*sap.ui.require([
     "sap/m/ListItemBase",
     "sap/ui/table/Row",
@@ -289,7 +290,7 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId, 20);
                 oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
                 if(oRes3 && oRes3.success){
                  return oRes3.selector;
@@ -496,7 +497,7 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingPropertyPath or i18n [add. viewName], ui5 properties,  otherwise use: id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId, 20);
                 oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
                 if(oRes3 && oRes3.success){
                  return oRes3.selector;
@@ -671,7 +672,7 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], otherwise use: id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId, 20);
                 oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
                 if(oRes3.success){
                  return oRes3.selector;
@@ -797,7 +798,7 @@ var ElementCentricStrategy = function() {
 
             if(oRes.fieldsMap && oElemProperties) {
                 // check siblings use: bindingProperty/aggregation/association Path or i18n [add. viewName], property, id (check not generic)
-                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId);
+                let aSiblingsProps = vyperUtil.getAllSiblingProperties(sControlId, 20);
                 oRes3 = evaluator.evalSiblingsProperties(sControlId, oRes.fieldsMap, aSiblingsProps);
                 if(oRes3.success){
                  return oRes3.selector;
@@ -814,7 +815,7 @@ var ElementCentricStrategy = function() {
                 //Check combi
                 let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
-                if(aCandNodes && vyperUtil.distanceNode(aCandNodes, id) === 0) {
+                if(aCandNodes && vyperUtil.distanceNode(aCandNodes, sControlId) === 0) {
                     return oSel;
                 }
 
@@ -825,7 +826,7 @@ var ElementCentricStrategy = function() {
                 //Check combi
                 oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
                 aCandNodes = ui5All(oSel);
-                let distComp = vyperUtil.distanceNode(aCandNodes, id);
+                let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
                     return oSel;
                 }

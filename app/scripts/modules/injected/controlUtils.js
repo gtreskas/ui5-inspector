@@ -73,7 +73,7 @@ function _extendObject() {
  */
 function _extendOptionsForModelDataview(options, modelInfo) {
     var additionalOptions = {};
-    if (modelInfo.mode === 'TwoWay' && options.showValue) {
+    if (modelInfo && modelInfo.mode === 'TwoWay' && options.showValue) {
         additionalOptions.editableValues = ['value'];
         additionalOptions.editModel = modelInfo.modelName;
         additionalOptions.editModelPath = modelInfo.fullPath;
@@ -95,6 +95,12 @@ function _assembleModelReferences(options, modelInfo, key) {
     // Do not print null or undefined
     if (key === undefined || key === null) {
         key = '';
+    }
+
+    if(!modelInfo) {
+        modelInfo = {
+            modelName: ''
+        }
     }
 
     var modelName = modelInfo.modelName || '';
