@@ -8,7 +8,6 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     var rightClickHandler = require('../modules/injected/rightClickHandler.js');
     var applicationUtils = require('../modules/injected/applicationUtils');
     var vyperElemCentricStrategy = require('./vyper/strategies/ui5/elementCentric');
-
     // Create global reference for the extension.
     ui5inspector.createReferences();
 
