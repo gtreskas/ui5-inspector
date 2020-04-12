@@ -1,3 +1,4 @@
+
 sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     'use strict';
 
@@ -62,9 +63,28 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     // Initialize
     mutation.init();
 
+    var contrIdForProm = null;
+    var vyperLocatorTriggered= false;
+
+    function getVyperOptLocator(controlId) {
+        var sel = null;
+        if(!vyperLocatorTriggered){
+            vyperLocatorTriggered = true;
+            return new Promise(function(res,rej){
+                if(contrIdForProm !== controlId){
+                    contrIdForProm = controlId;
+                    sel = vyperElemCentricStrategy.getOptSelectors(contrIdForProm);
+                }
+                vyperLocatorTriggered = false;
+                res(sel);
+            });
+        } else {
+            return Promise.resolve(sel);
+        }
+    };
+
     // Name space for message handler functions.
     var messageHandler = {
-
         /**
          * Send message with the needed initial information for the extension.
          */
@@ -90,6 +110,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
                 frameworkInformation: applicationUtils.getInformationForPopUp(frameworkInformation)
             });
         },
+        
 
         /**
          * Handler for logging event listener fucntion.
@@ -106,15 +127,10 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
          */
         'do-control-select': function (event) {
             var controlId = event.detail.target;
-            try {
-                console.log(vyperElemCentricStrategy.getOptSelectors(controlId));
-            } catch (error) {
-                console.log(error);
-            }
             var controlProperties = ToolsAPI.getControlProperties(controlId);
             var controlBindings = ToolsAPI.getControlBindings(controlId);
-            var controlAggregations = ToolsAPI.getControlAggregations(controlId);
-            var controlEvents = ToolsAPI.getControlEvents(controlId);
+            //var controlAggregations = ToolsAPI.getControlAggregations(controlId);
+            //var controlEvents = ToolsAPI.getControlEvents(controlId);
 
             message.send({
                 action: 'on-control-select',
@@ -122,6 +138,10 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
                 controlBindings: controlUtils.getControlBindingsFormattedForDataView(controlBindings),
                 controlAggregations: controlUtils.getControlAggregationsFormattedForDataView(controlId, controlAggregations),
                 controlEvents: controlUtils.getControlEventsFormattedForDataView(controlId, controlEvents)
+            });
+            let sl = getVyperOptLocator(controlId);
+            sl.then(function(sel){
+                if(sel) console.log(sel);
             });
         },
 

@@ -1043,11 +1043,14 @@ var VyperUtil = function() {
         }); 
         if (oControlIndx === -1) { throw new Error("Something is very wrong with prev/next control finder"); }
         else {
+        let aValidSmallControlPortion = [];    
         aValidControls.splice(oControlIndx, 1);
-        if(iMaxCtrl) {
-            aValidControls.splice(0, iMaxCtrl);
+        if(iMaxCtrl && aValidControls.length > iMaxCtrl) {
+            aValidSmallControlPortion = aValidSmallControlPortion.concat(aValidControls.splice(0, iMaxCtrl));
+        } else {
+            aValidSmallControlPortion = aValidControls;
         }
-        return aValidControls;
+        return aValidSmallControlPortion;
         }
     }
 
