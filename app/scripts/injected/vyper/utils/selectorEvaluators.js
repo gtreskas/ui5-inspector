@@ -405,7 +405,7 @@ var Evaluator = function() {
         retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, "elementProperties", null, finalDist, id);
         
         dist = retObject.distance;
-        if(retObject.aNodes && dist === 0) {
+        if(dist === 0) {
             // Success
             return retObject;
         } else {
@@ -824,7 +824,7 @@ var Evaluator = function() {
         retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, propType, null, finalDist, elemId);
         
         elemDist = retObject.distance;
-        if(retObject.aNodes && elemDist === 0) {
+        if(elemDist === 0) {
             // Success
             return retObject;
         } else {
@@ -1054,7 +1054,7 @@ var Evaluator = function() {
         retObject = this.filterUIProperties(oElemProperties.ui5Properties, includedFields, finalSelector, prefUIProps, propType, parentPropType, finalDist, elemId, parentLevel);
 
         elemDist = retObject.distance;
-        if(retObject.aNodes && elemDist === 0) {
+        if(elemDist === 0) {
             // Success
             return retObject;
         } else {
@@ -1113,26 +1113,28 @@ var Evaluator = function() {
             }  
         }
         if(aIds.length === 0) return this.selectorDist;
+        let aPromises = [];
+        var that = this;
         //Nothing found
         for (let index = 0; index < aIds.length; index++) {
             const id = aIds[index];
             let aNewDescendentProps = vyperUtil.getAllDescendantElementsProps(id);
-            if(parentType) {
-               oRes = this.exploreDescendantsRecurs(sControlId, aNewDescendentProps, enhancedFields, selector, parentType, parentLevel);
-            } else {
-                oRes = this.exploreDescendantsRecurs(sControlId, aNewDescendentProps, enhancedFields);
-            }
-            if(oRes.success) {
-                return oRes;
-            }
-
-            if(oRes.distance < this.selectorDist.distance) {
-                this.selectorDist.distance = oRes.distance;
-                this.selectorDist.selector = oRes.selector;
-                this.selectorDist.fieldsMap = oRes.fieldsMap;
-                this.selectorDist.aNodes = oRes.aNodes;
-            }
+            aPromises.push(new Promise(function(res,rej){
+                if(parentType) {
+                    oRes = that.exploreDescendantsRecurs(sControlId, aNewDescendentProps, enhancedFields, selector, parentType, parentLevel);
+                } else {
+                    oRes = that.exploreDescendantsRecurs(sControlId, aNewDescendentProps, enhancedFields);
+                }
+                if(oRes.distance < that.selectorDist.distance || oRes.success) {
+                    that.selectorDist.distance = oRes.distance;
+                    that.selectorDist.selector = oRes.selector;
+                    that.selectorDist.fieldsMap = oRes.fieldsMap;
+                    that.selectorDist.aNodes = oRes.aNodes;
+                }
+                res(that.selectorDist);
+            }));
         }
+        Promise.all(aPromises);
         return this.selectorDist;
     }
 
@@ -1153,6 +1155,7 @@ var Evaluator = function() {
         var enhancedFields = {};
         let oRes = {};
         let finalRes = {};
+        let aPromises = [];
         finalRes.success = false;
         finalRes.distance = 999;
         finalRes.fieldsMap = existingFields;
@@ -1162,17 +1165,18 @@ var Evaluator = function() {
             existingFields = {};
         }
         if(!aSiblingsProps || aSiblingsProps.length === 0) return finalRes;
+        var that = this;
         for (let index = 0;  index < aSiblingsProps.length; index++) {
             const siblingProps = aSiblingsProps[index];
-            oRes = this.getElementImportantProps(siblingProps["properties"], enhancedFields, "siblingProperties", sControlId);
-            if(oRes.success) {
-                return oRes;
-            }  
-            if(oRes.distance < finalRes.distance){
-                finalRes = oRes;
-            }
+            aPromises.push(new Promise(function(res,rej){
+                oRes = that.getElementImportantProps(siblingProps["properties"], enhancedFields, "siblingProperties", sControlId); 
+                if(oRes.distance < finalRes.distance || oRes.success){
+                    finalRes = oRes;
+                }
+                res(finalRes);
+            }));
         }
-
+        Promise.all(aPromises);
         // Didnt succeed
         return finalRes;
     }
@@ -1298,12 +1302,12 @@ var Evaluator = function() {
             if(oSel["ancestorProperties"]) {
                 // Element is the aggregation element
                 // Try ancestor of ancestor element
-                oRes2 = this.getElementImportantProps(oAncestorProperties, oSel, "ancestorProperties", "ancestorProperties", elemId);
+                oRes2 = this.getElementNestedImportantProps(oAncestorProperties, oSel, "ancestorProperties", "ancestorProperties", elemId);
                 if(oRes2.success) {
                     return oRes2;
                 }
             } else {
-                oRes2 = this.getElementImportantProps(oAncestorProperties, oSel, "ancestorProperties", null, elemId);
+                oRes2 = this.getElementNestedImportantProps(oAncestorProperties, oSel, "ancestorProperties", null, elemId);
                 if(oRes2.success) {
                     return oRes2;
                 }       
@@ -1362,10 +1366,22 @@ var Evaluator = function() {
                         if(ret1.success) {
                             return ret1;
                         }
+                        if(ret1.distance < this.selectorDist.distance) {
+                            this.selectorDist.distance = ret1.distance;
+                            this.selectorDist.selector = ret1.selector;
+                            this.selectorDist.fieldsMap = ret1.fieldsMap;
+                            this.selectorDist.aNodes = ret1.aNodes;
+                        }
                     } else if(!stopId) {
                         let ret1 = this.evalAncestorProperties(sControlId, enhancedFields, oNextAncestorProperties, level);
                         if(ret1.success) {
                             return ret1;
+                        }
+                        if(ret1.distance < this.selectorDist.distance) {
+                            this.selectorDist.distance = ret1.distance;
+                            this.selectorDist.selector = ret1.selector;
+                            this.selectorDist.fieldsMap = ret1.fieldsMap;
+                            this.selectorDist.aNodes = ret1.aNodes;
                         }
                     } else {
                         // Didnt succeed

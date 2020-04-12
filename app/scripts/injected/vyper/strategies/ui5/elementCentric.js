@@ -303,8 +303,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes.selector && 
                 oRes1.selector && oRes2.selector){
+                let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -321,8 +322,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes3.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes3.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -338,8 +340,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes2.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
                 aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -402,6 +405,10 @@ var ElementCentricStrategy = function() {
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
+                }
                 
             }
             // Retry with legacy selector
@@ -429,9 +436,13 @@ var ElementCentricStrategy = function() {
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
+                }
             }
             // Use index as fallback [use index as property]
-            let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+            let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
             if(oResIdx.success){ 
                 oRes.selector.elementProperties["index"] = oResIdx.index;
                 return oRes.selector;
@@ -510,8 +521,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes.selector && 
                 oRes1.selector && oRes2.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -528,8 +540,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes3.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes3.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -545,8 +558,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes2.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
                 aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -577,6 +591,10 @@ var ElementCentricStrategy = function() {
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
+                }
             }
 
             // Retry with legacy selector
@@ -604,10 +622,14 @@ var ElementCentricStrategy = function() {
                 if(oResPar1.success){
                     return oResPar1.selector;
                 }
+                if(oResPar1.distance < finalRes.distance){
+                    finalRes={};
+                    Object.assign(finalRes, oResPar1);
+                }
             }
 
              // Use index as fallback [use index as property]
-             let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+             let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
@@ -685,8 +707,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes.selector && 
                 oRes1.selector && oRes2.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -703,8 +726,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes3.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes3.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -720,8 +744,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes2.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
                 aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -736,7 +761,7 @@ var ElementCentricStrategy = function() {
             }
 
              // Use index as fallback [use index as property]
-             let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+             let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
@@ -812,20 +837,10 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes.selector && 
                 oRes1.selector && oRes2.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes2.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
-                if(aCandNodes && vyperUtil.distanceNode(aCandNodes, sControlId) === 0) {
-                    return oSel;
-                }
-
-            }
-
-            if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
-                oRes1.selector && oRes2.selector && oRes3.selector){
-                //Check combi
-                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
-                aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
                     return oSel;
@@ -840,8 +855,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                let oSel = deepExtend(oRes1.selector, oRes3.selector, oRes.selector);
+                let oSel = deepExtend(plHoldSelector, oRes1.selector, oRes3.selector, oRes.selector);
                 let aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -857,8 +873,9 @@ var ElementCentricStrategy = function() {
 
             if(oRes && oRes1 && oRes2 && oRes3 && oRes.selector && 
                 oRes1.selector && oRes2.selector && oRes3.selector){
+                    let plHoldSelector = {};
                 //Check combi
-                oSel = deepExtend(oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
+                oSel = deepExtend(plHoldSelector, oRes1.selector, oRes2.selector, oRes3.selector, oRes.selector);
                 aCandNodes = ui5All(oSel);
                 let distComp = vyperUtil.distanceNode(aCandNodes, sControlId);
                 if(aCandNodes && distComp === 0) {
@@ -873,7 +890,7 @@ var ElementCentricStrategy = function() {
             }
 
              // Use index as fallback [use index as property]
-             let oResIdx = evaluator.getSelectorIndex(oRes.selector, sControlId, 0);
+             let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
