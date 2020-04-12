@@ -1,6 +1,7 @@
 var vyperUtil = require('./vyperUtil');
 var ui5All = require('./vyperLocator');
 var queryBuilder = require('./queryBuilder');
+var deepExtend = require('deep-extend');
 var Evaluator = function() {
     this.evaluateBindingContextPath = function(sBindingContextPathVal) {
         var sBinding = sBindingContextPathVal;
@@ -1190,7 +1191,7 @@ var Evaluator = function() {
         } else {
             enhancedFields = {};
         }
-        oRes1.selector = oSelector;
+        
 
         if(oElemProperties && oAncestorElemProperties && oAncestorProperties && 
             aDescendentProps && oElemProperties.ui5Properties && oAncestorElemProperties.ui5Properties) {
@@ -1204,7 +1205,34 @@ var Evaluator = function() {
                     if(oRes1.success) {
                         return oRes1;
                     } 
-                } 
+                
+                    if(oRes1 && oRes1.selector && oSelector) {
+                        let plHoldSelector = {};
+                        //Check combi
+                        let oSel = deepExtend(plHoldSelector, oRes1.selector, oSelector);
+                        let aCandNodes = ui5All(oSel);
+                        let distComp = vyperUtil.distanceNode(aCandNodes, elemId);
+                        if(aCandNodes && distComp === 0) {
+                            return oSel;
+                        }
+                        if(distComp < oRes1.distance){
+                            oRes1.success = false;
+                            oRes1.selector = oSel;
+                            oRes1.distance = distComp;
+                            oRes1.aNodes = aCandNodes;
+                        }
+                    }
+
+                    parentLevel = null;
+                    if(oRes1.selector["ancestorProperties"]) {
+                        parentLevel = 1;
+                        if(oRes1.selector["ancestorProperties"]["ancestorProperties"]) {
+                            parentLevel = 2;
+                        }
+                    }
+                } else {
+                    oRes1.selector = oSelector;
+                }
                 /*
                 //Already done once
                 else {
@@ -1220,7 +1248,34 @@ var Evaluator = function() {
                     if(oRes1.success) {
                         return oRes1;
                     }
-                } /*else {
+                    if(oRes1 && oRes1.selector && oSelector) {
+                        let plHoldSelector = {};
+                        //Check combi
+                        let oSel = deepExtend(plHoldSelector, oRes1.selector, oSelector);
+                        let aCandNodes = ui5All(oSel);
+                        let distComp = vyperUtil.distanceNode(aCandNodes, elemId);
+                        if(aCandNodes && distComp === 0) {
+                            return oSel;
+                        }
+                        if(distComp < oRes1.distance){
+                            oRes1.success = false;
+                            oRes1.selector = oSel;
+                            oRes1.distance = distComp;
+                            oRes1.aNodes = aCandNodes;
+                        }
+                    }
+
+                    parentLevel = null;
+                    if(oRes1.selector["ancestorProperties"]) {
+                        parentLevel = 1;
+                        if(oRes1.selector["ancestorProperties"]["ancestorProperties"]) {
+                            parentLevel = 2;
+                        }
+                    }
+                } else {
+                    oRes1.selector = oSelector;
+                } 
+                /*else {
                      // Case 2 Element is the ancestor Element --> Check only descendants + ancestor
                     // Try ancestor of ancestor element
                     oRes1 = this.getElementNestedImportantProps(oAncestorElemProperties, oSelector, "ancestorProperties", "ancestorProperties", elemId, parentLevel);
@@ -1239,31 +1294,35 @@ var Evaluator = function() {
             }
             if(!parentLevel) {
                 // Check descendants
-                oRes2 = this.exploreDescendantsRecurs(elemId, filtDescentantProps, oRes1.fieldsMap, oRes1.selector, "ancestorProperties");
+                oRes2 = this.exploreDescendantsRecurs(elemId, filtDescentantProps, enhancedFields, oRes1.selector, "ancestorProperties");
                 if(oRes2 && oRes2.success) {
                     return oRes2;
                 } 
             } else {
-                oRes2 = this.exploreDescendantsRecurs(elemId, filtDescentantProps, oRes1.fieldsMap, oRes1.selector, "ancestorProperties", parentLevel);
+                oRes2 = this.exploreDescendantsRecurs(elemId, filtDescentantProps, enhancedFields, oRes1.selector, "ancestorProperties", parentLevel);
                 if(oRes2 && oRes2.success) {
                     return oRes2;
                 }
             }
-            let selTor = oRes2.selector;
-            let distFinal = oRes2.distance;
-            let fldMaps = oRes2.fieldsMap;
-            if(oRes2.distance >= oRes1.distance) {
-                selTor = oRes1.selector;
-                distFinal = oRes1.distance;
-                fldMaps = oRes1.fieldsMap;
-            }
-            // Didnt succeed
-            return {
-                "success": false,
-                "distance": distFinal,
-                "fieldsMap": fldMaps,
-                "selector": selTor,
-                "aNodes": []
+            if(oRes1.distance !== undefined) {
+                let selTor = oRes1.selector;
+                let distFinal = oRes1.distance;
+                let fldMaps = oRes1.fieldsMap;
+                if(oRes2.distance < oRes1.distance) {
+                    selTor = oRes2.selector;
+                    distFinal = oRes2.distance;
+                    fldMaps = oRes2.fieldsMap;
+                }
+                // Didnt succeed
+                return {
+                    "success": false,
+                    "distance": distFinal,
+                    "fieldsMap": fldMaps,
+                    "selector": selTor,
+                    "aNodes": []
+                }
+            } else {
+                return oRes2;
             }
         }
     }
@@ -1313,12 +1372,12 @@ var Evaluator = function() {
                 }       
             }
 
-            if(oRes2.distance >= oRes1.distance) {
+            if(oRes2.distance < oRes1.distance) {
                 // Didnt succeed
-                return oRes1;
+                return oRes2;
             } else {
                // Didnt succeed
-               return oRes2;
+               return oRes1;
             }
             
         }
