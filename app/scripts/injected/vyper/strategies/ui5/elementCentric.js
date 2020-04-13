@@ -119,25 +119,25 @@ var ElementCentricStrategy = function() {
     this.checkAggregationElement = function(oControl) {
         if(!oControl) return false;
         return sap && 
-            (sap.m && oControl instanceof sap.m.ListItemBase) ||
-            (sap.ui && sap.ui.table && oControl instanceof sap.ui.table.Row) ||
-            (sap.ui && sap.ui.core && oControl instanceof sap.ui.core.Item) ||
-            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.MenuItemBase) ||
-            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.Menu) ||
-            (sap.m  && oControl instanceof sap.m.Token);
+            (sap.m && sap.m.ListItemBase && oControl instanceof sap.m.ListItemBase) ||
+            (sap.ui && sap.ui.table && sap.ui.table.Row && oControl instanceof sap.ui.table.Row) ||
+            (sap.ui && sap.ui.core && sap.ui.core.Item && oControl instanceof sap.ui.core.Item) ||
+            (sap.ui && sap.ui.unified && sap.ui.unified.MenuItemBase && oControl instanceof sap.ui.unified.MenuItemBase) ||
+            (sap.ui && sap.ui.unified && sap.ui.unified.Menu && oControl instanceof sap.ui.unified.Menu) ||
+            (sap.m  && sap.m.Token && oControl instanceof sap.m.Token);
     }
 
     this.checkAggregation = function(oControl) {
         if(!oControl) return false;
         return sap &&  
-            (sap.tnt && oControl instanceof sap.tnt.NavigationList) ||
-            (sap.m && oControl instanceof sap.m.ComboBoxBase) ||
-            (sap.m && oControl instanceof sap.m.ListBase) ||
-            (sap.ui && sap.ui.table && oControl instanceof sap.ui.table.Table) ||
-            (sap.m && oControl instanceof sap.m.MultiInput) ||
-            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.MenuItemBase) ||
-            (sap.ui && sap.ui.unified && oControl instanceof sap.ui.unified.Menu) ||
-            (sap.m  && oControl instanceof sap.m.Tokenizer);
+            (sap.tnt && sap.tnt.NavigationList && oControl instanceof sap.tnt.NavigationList) ||
+            (sap.m && sap.m.ComboBoxBase && oControl instanceof sap.m.ComboBoxBase) ||
+            (sap.m && sap.m.ListBase && oControl instanceof sap.m.ListBase) ||
+            (sap.ui && sap.ui.table && sap.ui.table.Table && oControl instanceof sap.ui.table.Table) ||
+            (sap.m && sap.m.MultiInput && oControl instanceof sap.m.MultiInput) ||
+            (sap.ui && sap.ui.unified && sap.ui.unified.MenuItemBase && oControl instanceof sap.ui.unified.MenuItemBase) ||
+            (sap.ui && sap.ui.unified && sap.ui.unified.Menu && oControl instanceof sap.ui.unified.Menu) ||
+            (sap.m  && sap.m.Tokenizer && oControl instanceof sap.m.Tokenizer);
     }
 
     this.recursiveCheckDescendantOfAggregation = function(oControl) {
