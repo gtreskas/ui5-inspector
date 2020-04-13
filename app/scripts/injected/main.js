@@ -1,4 +1,3 @@
-
 sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     'use strict';
 
@@ -140,7 +139,13 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
             });
             let sl = getVyperOptLocator(controlId);
             sl.then(function(sel){
-                if(sel) console.log(sel);
+                if(sel) {
+                    message.send({
+                        action: 'on-vyper-data',
+                        selector: sel
+                    });
+                    //console.log(sel);
+                }
             });
         },
 

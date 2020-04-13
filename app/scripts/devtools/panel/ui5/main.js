@@ -34,7 +34,7 @@
 
     // Horizontal Splitter for 'Control Inspector' tab
     var controlInspectorHorizontalSplitter = new Splitter('horizontal-splitter', {
-        endContainerWidth: '400px'
+        //endContainerWidth: '400px'
     });
 
     // Control tree
@@ -154,6 +154,24 @@
 
     // Name space for message handler functions.
     var messageHandler = {
+
+        'on-vyper-data': function(message) {
+            let sel = message.selector;
+            if(!edt) {
+                var edt = vyperEditor;
+                if(!edt) {
+                    edtDom = document.querySelector('.CodeMirror');
+                    if(edtDom && edtDom.CodeMirror) {
+                        edt = edtDom.CodeMirror;
+                    }
+                }
+            }
+            if(sel) {
+                edt.setOption("value", JSON.stringify(sel));
+            } else {
+                edt.setOption("value", "Not able to generate a selector!");
+            }
+        },
 
         /**
          * Send object to background page.

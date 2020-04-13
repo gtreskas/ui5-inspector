@@ -3,6 +3,15 @@
     <head lang="en">
         <meta charset="UTF-8">
         <title>UI5 Inspector</title>
+        <!-- Create a simple CodeMirror instance -->
+        <link rel="stylesheet" href="../../lib/codemirror.css">
+        <link rel="stylesheet" href="../../lib/addon/hint/show-hint.css">
+        <link rel="stylesheet" href="../../lib/theme/erlang-dark.css">
+        <script src="../../lib/codemirror.js"></script>
+        <script src="../../lib/addon/hint/show-hint.js"></script>
+        <script src="../../lib/addon/hint/javascript-hint.js"></script>
+        <script scr="../../lib/addon/edit/closebrackets.js"></script>
+        <script scr="../../lib/addon/edit/matchbrackets.js"></script>
     </head>
     <body>
         <tabbar id="ui5-tabbar">
@@ -17,7 +26,37 @@
                     <splitter id="horizontal-splitter">
                         <!-- SplitContainer left side /start-->
                         <start>
-                            <control-tree id="control-tree"></control-tree>
+                            <splitter id="tree-splitter-splitter" orientation="vertical">
+                                <start>
+                                    <control-tree id="control-tree"></control-tree>
+                                </start>
+                                <end>
+                                    <table style="width:100%;border-top-style: ridge;">
+                                        <tr>
+                                            <td>
+                                                <select onchange="" id="select">
+                                                    <option selected>Ui5</option>
+                                                    <option>non Ui5</option>
+                                                </select>
+                                            </td> 
+                                        </tr>
+                                        <tr></tr>
+                                        <tr>
+                                            <td>
+                                                <textarea id="vyperArea"></textarea>
+                                                <script src="../../lib/vyperEditor.js">
+                                                </script>
+                                            </td> 
+                                        </tr>
+                                        <tr></tr>
+                                        <tr>
+                                            <td>
+                                                <button type="button">Run</button> 
+                                            </td> 
+                                        </tr> 
+                                    </table>
+                                </end>
+                            </splitter>
                         </start>
                         <!-- SplitContainer left side /ends-->
 

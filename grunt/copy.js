@@ -16,6 +16,7 @@ module.exports = function (grunt, config) {
                 src: [
                     '*.txt',
                     'html/**/*.html',
+                    'html/lib/**/*.*',
                     'images/**/*.*',
                     'manifest.json'
                 ]
