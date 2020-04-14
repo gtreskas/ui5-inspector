@@ -70,6 +70,13 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
             vyperLocatorTriggered = true;
             return new Promise(function(res,rej){
                 if(contrIdForProm !== controlId){
+                    let val = {
+                        "value": true
+                    }
+                    message.send({
+                        action: 'on-vyper-req-progress',
+                        isBusy: val
+                    });
                     contrIdForProm = controlId;
                     sel = vyperElemCentricStrategy.getOptSelectors(contrIdForProm);
                 }
@@ -144,6 +151,14 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
                         action: 'on-vyper-data',
                         selector: sel
                     });
+                    let val = {
+                        "value": false
+                    }
+                    message.send({
+                        action: 'on-vyper-req-progress',
+                        isBusy: val
+                    });
+                    
                     //console.log(sel);
                 }
             });
