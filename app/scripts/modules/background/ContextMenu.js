@@ -26,13 +26,20 @@ function ContextMenu(options) {
 ContextMenu.prototype.create = function () {
     var that = this;
 
-    chrome.contextMenus.create({
+    chrome.contextMenus.remove(that._title, function() {
+        chrome.contextMenus.create({
+            title: that._title,
+            id: that._id,
+            contexts: that._contexts
+        });
+        chrome.contextMenus.onClicked.addListener(that._onClickHandler.bind(that));
+      });
+
+    /*chrome.contextMenus.create({
         title: that._title,
         id: that._id,
         contexts: that._contexts
-    });
-
-    chrome.contextMenus.onClicked.addListener(that._onClickHandler.bind(that));
+    });*/
 };
 
 /**

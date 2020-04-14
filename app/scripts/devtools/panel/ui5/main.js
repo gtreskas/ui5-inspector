@@ -138,6 +138,21 @@
     // Name space for message handler functions.
     var messageHandler = {
 
+        'on-vyper-req-progress': function(message) {
+            let isBusy = message.isBusy.value;
+            let busyi = document.getElementById("busybox");
+            if(busyi) {
+                if(isBusy) {
+                    busyi.style.display = "block";
+                    
+                } else 
+                    busyi.style.display = "none";{
+                }
+            } else {
+                throw new Error("Busy indicator is undefined");
+            }
+        },
+
         'on-vyper-data': function(message) {
             let sel = message.selector;
             if(!edt) {
