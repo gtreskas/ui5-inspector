@@ -12,6 +12,7 @@
     // Components that need to be required and reference
     // ================================================================================
     var utils = require('../../../modules/utils/utils.js');
+    var beautifier = require('../../../../html/lib/beautify.js');
     var TabBar = require('../../../modules/ui/TabBar.js');
     var ControlTree = require('../../../modules/ui/ControlTree.js');
     var DataView = require('../../../modules/ui/DataView.js');
@@ -166,8 +167,10 @@
                     }
                 }
             }
-            if(sel) {
-                edt.setOption("value", JSON.stringify(sel));
+            if(sel && beautifier) {
+                let jsBeautifyExec = beautifier.js_beautify
+                let beautifiedJs = jsBeautifyExec(JSON.stringify(sel));
+                edt.setOption("value", beautifiedJs);
             } else {
                 edt.setOption("value", "Not able to generate a selector!");
             }
