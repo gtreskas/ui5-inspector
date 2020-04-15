@@ -31,8 +31,9 @@ ContextMenu.prototype.create = function () {
             title: that._title,
             id: that._id,
             contexts: that._contexts
+        }, function(){
+            chrome.contextMenus.onClicked.addListener(that._onClickHandler.bind(that));
         });
-        chrome.contextMenus.onClicked.addListener(that._onClickHandler.bind(that));
       });
 
     /*chrome.contextMenus.create({

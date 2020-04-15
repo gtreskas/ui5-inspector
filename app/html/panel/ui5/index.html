@@ -35,10 +35,24 @@
                                     <table style="width:100%;border-top-style: ridge;">
                                         <tr>
                                             <td>
-                                                <select onchange="" id="select">
+                                                Locator Type:
+                                                <select id="selectLocator">
                                                     <option selected>Ui5</option>
                                                     <option>non Ui5</option>
                                                 </select>
+                                            </td> 
+                                            <td>
+                                                Action Type:
+                                                <select id="selectAction">
+                                                    <option selected>click</option>
+                                                    <option>clear</option>
+                                                    <option>fill</option>
+                                                    <option>clearAndFill</option>
+                                                    <option>clearFillAndRetry</option>
+                                                </select>
+                                            </td> 
+                                            
+                                            <td>
                                             </td> 
                                         </tr>
                                         <tr></tr>
@@ -52,9 +66,15 @@
                                         <tr></tr>
                                         <tr>
                                             <td>
-                                                <button type="button">Run</button> 
+                                                <button type="button" id="runVyper">Run</button> 
                                                 <div id="busybox">
                                                     Loading.....
+                                                </div>
+                                                <div id="success">
+                                                    Success!
+                                                </div>
+                                                <div id="failed">
+                                                    Failed!
                                                 </div>
                                             </td> 
                                         </tr> 
