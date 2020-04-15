@@ -88,6 +88,17 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
         }
     };
 
+    function testVyperLocatorAndAction(selector, action, sVal, index) {
+        var oRes = vyperElemCentricStrategy.testLocator(selector, index);
+        if(oRes && oRes.id) {
+            return reuseAction.doAction(action, oRes, sVal);
+        } else {
+            //Results not found, or multiple found
+            return false;
+        }
+        
+    };
+
     // Name space for message handler functions.
     var messageHandler = {
         /**
@@ -113,6 +124,29 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
             message.send({
                 action: 'on-framework-information',
                 frameworkInformation: applicationUtils.getInformationForPopUp(frameworkInformation)
+            });
+        },
+
+        'do-run-vyper-script': function(message){
+            let val = {
+                "value": true
+            }
+            message.send({
+                action: 'on-vyper-req-progress',
+                isBusy: val,
+            });
+            let sel = message.selector;
+            let act = message.action.value;
+            let idx = message.action.index;
+            let entValue = message.action.entValue;
+            let succ = {
+                "value": testVyperLocatorAndAction(sel, act, entValue, idx)
+            };
+            val.isBusy = false;
+            message.send({
+                action: 'on-vyper-req-progress',
+                isBusy: val,
+                success: succ
             });
         },
         

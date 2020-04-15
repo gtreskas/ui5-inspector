@@ -130,7 +130,109 @@
 
     // Dataview for 'Application information' tab
     var appInfo = new DataView('app-info');
+/////////////////////////Vyper//////////////////////////////////////////////////////////////
+    var ReuseDictionary = {
+        "click": "ui5.common.userInteraction.click",
+        "clear": "ui5.common.userInteraction.clear",
+        "clearAndRetry": "ui5.common.userInteraction.clearAndRetry",
+        "fill": "ui5.common.userInteraction.fill",
+        "fillAndRetry":"ui5.common.userInteraction.fillAndRetry",
+        "clearAndFill": "ui5.common.userInteraction.clearAndFill",
+        "clearFillAndRetry": "ui5.common.userInteraction.clearFillAndRetry"
 
+    };
+    var vyperButton = document.getElementById("runVyper");
+    var vyperAction = document.getElementById("selectAction");
+    var oCurrentSelector;
+    //Attach action changed
+    vyperAction.addEventListener("change", function(){
+        //Get editor instance
+        if(!edt) {
+            var edt = vyperEditor;
+            if(!edt) {
+                edtDom = document.querySelector('.CodeMirror');
+                if(edtDom && edtDom.CodeMirror) {
+                    edt = edtDom.CodeMirror;
+                }
+            }
+        }
+
+        let jsBeautifyExec = beautifier.js_beautify;
+        var formCode = formatVyperCode(oCurrentSelector);
+        let beautifiedJs = jsBeautifyExec(formCode);
+        edt.setOption("value", beautifiedJs);
+    });
+
+
+    // Attach run vyper event
+    vyperButton.addEventListener("click", function(){
+        //Get editor instance
+        if(!edt) {
+            var edt = vyperEditor;
+            if(!edt) {
+                edtDom = document.querySelector('.CodeMirror');
+                if(edtDom && edtDom.CodeMirror) {
+                    edt = edtDom.CodeMirror;
+                }
+            }
+        }
+        // Get value of editor
+        let strVal = edt.getValue();
+        let jsonStr = "";
+
+        if(strVal && vyperAction.value) {
+            try {
+                jsonStr = strVal.substring(strVal.indexOf('{'), strVal.indexOf(';'));
+                let sel = JSON.parse(jsonStr);
+                //Action  index
+                let idxStr = strVal.substring(strVal.indexOf("index"));
+                idxStr = idxStr.substring(idxStr.indexOf('=') + 1, idxStr.indexOf(';'))
+                let idx = 0;
+                if(idxStr && !Number.isNaN(parseInt(idxStr.trim()))){
+                    idx = parseInt(idxStr.trim());
+                }
+                // Get value
+                let sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
+                sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
+                //Send message
+                port.postMessage({
+                    action: 'do-run-vyper-script',
+                    selector: sel,
+                    action: {"value": vyperAction.value, "index": idx, "entValue": sValEnter}
+                });
+            } catch (error) {
+                throw new Error("Something went wrong with the parsing of the information");
+            }
+        } else {
+            // Nothing to run ignore...
+        }
+    });
+
+    var formatVyperCode = function(sel) {
+        var sSelector = JSON.stringify(sel);
+        var strSel = 'const selector = ' + sSelector + ';';
+        if(vyperAction.value !== "click") {
+            strSel = strSel + 'const valueToEnter = "myValue";';
+        }
+
+        let idx = 0;
+        if(sel.elementProperties && sel.elementProperties.index) {
+            idx = sel.elementProperties.index;
+            delete sel.elementProperties.index;
+        } 
+        strSel = strSel + 'const index = '+ idx + ';';
+
+        if(vyperAction.value) {
+            strSel = strSel +  'await ' + ReuseDictionary[vyperAction.value] + '(selector, ';
+            if(vyperAction.value !== "click") {
+                strSel = strSel + 'valueToEnter, '; 
+            }
+            strSel = strSel + 'index);'
+        }
+        return strSel;
+    }
+
+ //////////////////////////////////////////////////////////////////////////////////////   
     // ================================================================================
     // Communication
     // ================================================================================
@@ -139,21 +241,41 @@
     var messageHandler = {
 
         'on-vyper-req-progress': function(message) {
+            let successDom = document.getElementById("success");
+            let failedDom = document.getElementById("failed");
+            successDom.style.display = "none";
+            failedDom.style.display = "none";
+
             let isBusy = message.isBusy.value;
             let busyi = document.getElementById("busybox");
             if(busyi) {
                 if(isBusy) {
                     busyi.style.display = "block";
                     
-                } else 
-                    busyi.style.display = "none";{
+                } else { 
+                    busyi.style.display = "none";
                 }
             } else {
                 throw new Error("Busy indicator is undefined");
             }
+
+            if(message.success !== undefined){
+                let success = message.success.value;
+                if(success) {
+                    successDom.style.display = "block";
+                    failedDom.style.display = "none";
+                } else { 
+                    successDom.style.display = "none";
+                    failedDom.style.display = "block";
+                }
+            }
         },
 
         'on-vyper-data': function(message) {
+            let successDom = document.getElementById("success");
+            let failedDom = document.getElementById("failed");
+            successDom.style.display = "none";
+            failedDom.style.display = "none";
             let sel = message.selector;
             if(!edt) {
                 var edt = vyperEditor;
@@ -165,8 +287,10 @@
                 }
             }
             if(sel && beautifier) {
-                let jsBeautifyExec = beautifier.js_beautify
-                let beautifiedJs = jsBeautifyExec(JSON.stringify(sel));
+                let jsBeautifyExec = beautifier.js_beautify;
+                oCurrentSelector = sel;
+                var formCode = formatVyperCode(sel);
+                let beautifiedJs = jsBeautifyExec(formCode);
                 edt.setOption("value", beautifiedJs);
             } else {
                 edt.setOption("value", "Not able to generate a selector!");

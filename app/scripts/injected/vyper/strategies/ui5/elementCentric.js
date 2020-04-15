@@ -223,6 +223,17 @@ var ElementCentricStrategy = function() {
         }
     }
 
+    this.testLocator = function(oSelector, nIndx) {
+        if(oSelector) {
+            var aRes = ui5All(oSelector, nIndx);
+        }
+
+        if(aRes && aRes.length === 1) {
+            return aRes[0];
+        }
+        return null;
+    }
+
     this.getOptSelectors = function(sControlId) {
         var oRes = {};
         var oResPar1 = [];
