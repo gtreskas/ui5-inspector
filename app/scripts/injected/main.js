@@ -7,6 +7,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     var rightClickHandler = require('../modules/injected/rightClickHandler.js');
     var applicationUtils = require('../modules/injected/applicationUtils');
     var vyperElemCentricStrategy = require('./vyper/strategies/ui5/elementCentric');
+    var reuseAction = require('./vyper/utils/reuseActions');
     // Create global reference for the extension.
     ui5inspector.createReferences();
 
@@ -127,7 +128,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
             });
         },
 
-        'do-run-vyper-script': function(message){
+        'do-run-vyper-script': function(event){
             let val = {
                 "value": true
             }
@@ -135,14 +136,14 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
                 action: 'on-vyper-req-progress',
                 isBusy: val,
             });
-            let sel = message.selector;
-            let act = message.action.value;
-            let idx = message.action.index;
-            let entValue = message.action.entValue;
+            let sel = event.detail.selector;
+            let act = event.detail.methodVyp.method;
+            let idx = event.detail.methodVyp.index;
+            let entValue = event.detail.methodVyp.entValue;
             let succ = {
                 "value": testVyperLocatorAndAction(sel, act, entValue, idx)
             };
-            val.isBusy = false;
+            val.value = false;
             message.send({
                 action: 'on-vyper-req-progress',
                 isBusy: val,

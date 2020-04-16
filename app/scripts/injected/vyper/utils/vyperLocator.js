@@ -1194,6 +1194,8 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
         && aControls && aControls.length > 0){
       if ((index <= (aControls.length - 1)) && (index >= 0)) {
         return [aControls[index]];
+      } else {
+        return [];
       }
     }
     return aControls;

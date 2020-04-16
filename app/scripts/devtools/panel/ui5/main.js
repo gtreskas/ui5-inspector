@@ -17,7 +17,7 @@
     var ControlTree = require('../../../modules/ui/ControlTree.js');
     var DataView = require('../../../modules/ui/DataView.js');
     var Splitter = require('../../../modules/ui/SplitContainer.js');
-
+    var deepExtend = require('deep-extend');
     // Apply theme
     // ================================================================================
     utils.applyTheme(chrome.devtools.panels.themeName);
@@ -161,7 +161,7 @@
     };
     var vyperButton = document.getElementById("runVyper");
     var vyperAction = document.getElementById("selectAction");
-    var oCurrentSelector;
+    var oCurrentSelector = {};
     //Attach action changed
     vyperAction.addEventListener("change", function(){
         //Get editor instance
@@ -197,8 +197,10 @@
         // Get value of editor
         let strVal = edt.getValue();
         let jsonStr = "";
+        let busyi = document.getElementById("busybox");
+        busyi.style.display = "none";
 
-        if(strVal && vyperAction.value) {
+        if(strVal && vyperAction.value && strVal.indexOf('{') !== -1) {
             try {
                 jsonStr = strVal.substring(strVal.indexOf('{'), strVal.indexOf(';'));
                 let sel = JSON.parse(jsonStr);
@@ -209,14 +211,18 @@
                 if(idxStr && !Number.isNaN(parseInt(idxStr.trim()))){
                     idx = parseInt(idxStr.trim());
                 }
-                // Get value
-                let sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
-                sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
+                let sValEnter = "";
+                if(vyperAction.value !== "click" && strVal.indexOf("valueToEnter") !== -1){
+                    // Get value
+                    sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
+                    sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
+                } 
+
                 //Send message
                 port.postMessage({
                     action: 'do-run-vyper-script',
                     selector: sel,
-                    action: {"value": vyperAction.value, "index": idx, "entValue": sValEnter}
+                    methodVyp: {"method": vyperAction.value, "index": idx, "entValue": sValEnter}
                 });
             } catch (error) {
                 throw new Error("Something went wrong with the parsing of the information");
@@ -227,17 +233,19 @@
     });
 
     var formatVyperCode = function(sel) {
-        var sSelector = JSON.stringify(sel);
+        if(!sel || isEmptyObj(sel))  return "No valid selector could be generated";
+        let currSel = {};
+        deepExtend(currSel, sel, {});
+        let idx = 0;
+        if(currSel.elementProperties && currSel.elementProperties.index) {
+            idx = currSel.elementProperties.index;
+            delete currSel.elementProperties.index;
+        } 
+        var sSelector = JSON.stringify(currSel);
         var strSel = 'const selector = ' + sSelector + ';';
         if(vyperAction.value !== "click") {
             strSel = strSel + 'const valueToEnter = "myValue";';
         }
-
-        let idx = 0;
-        if(sel.elementProperties && sel.elementProperties.index) {
-            idx = sel.elementProperties.index;
-            delete sel.elementProperties.index;
-        } 
         strSel = strSel + 'const index = '+ idx + ';';
 
         if(vyperAction.value) {
@@ -250,6 +258,10 @@
         return strSel;
     }
 
+    var isEmptyObj = function(obj) {
+        return Object.entries(obj).length === 0 && obj.constructor === Object;
+    }
+
  //////////////////////////////////////////////////////////////////////////////////////   
     // ================================================================================
     // Communication
@@ -258,13 +270,13 @@
     // Name space for message handler functions.
     var messageHandler = {
 
-        'on-vyper-req-progress': function(message) {
+        'on-vyper-req-progress': function(event) {
             let successDom = document.getElementById("success");
             let failedDom = document.getElementById("failed");
             successDom.style.display = "none";
             failedDom.style.display = "none";
 
-            let isBusy = message.isBusy.value;
+            let isBusy = event.isBusy.value;
             let busyi = document.getElementById("busybox");
             if(busyi) {
                 if(isBusy) {
@@ -277,8 +289,8 @@
                 throw new Error("Busy indicator is undefined");
             }
 
-            if(message.success !== undefined){
-                let success = message.success.value;
+            if(event.success !== undefined){
+                let success = event.success.value;
                 if(success) {
                     successDom.style.display = "block";
                     failedDom.style.display = "none";
@@ -289,12 +301,12 @@
             }
         },
 
-        'on-vyper-data': function(message) {
+        'on-vyper-data': function(event) {
             let successDom = document.getElementById("success");
             let failedDom = document.getElementById("failed");
             successDom.style.display = "none";
             failedDom.style.display = "none";
-            let sel = message.selector;
+            let sel = event.selector;
             if(!edt) {
                 var edt = vyperEditor;
                 if(!edt) {
@@ -304,14 +316,15 @@
                     }
                 }
             }
-            if(sel && beautifier) {
+            if(sel && beautifier && !isEmptyObj(sel)) {
                 let jsBeautifyExec = beautifier.js_beautify;
-                oCurrentSelector = sel;
+                oCurrentSelector= sel;
                 var formCode = formatVyperCode(sel);
                 let beautifiedJs = jsBeautifyExec(formCode);
                 edt.setOption("value", beautifiedJs);
             } else {
-                edt.setOption("value", "Not able to generate a selector!");
+                oCurrentSelector = {};
+                edt.setOption("value", "No valid selector could be generated");
             }
         },
 
