@@ -372,6 +372,16 @@ var Evaluator = function() {
             }
         }
 
+        const icon = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "icon");
+        if(icon){
+            includedFields["icon"] = icon;
+        }
+
+        const src = vyperUtil.getKeyValue(oElemProperties.ui5Properties, "src");
+        if(src){
+            includedFields["src"] = src;
+        }
+
         if(Object.keys(includedFields).length > 0) {
             selector = queryBuilder.buildSelector(includedFields, "elementProperties");
             aFoundNodes = ui5All(selector);

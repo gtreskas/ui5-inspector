@@ -520,6 +520,24 @@ var VyperUtil = function() {
         } catch (error) {
         return false;
         }
+    },
+
+    this.getControlDirectView = function(oControl) {
+        try {
+        // eslint-disable-next-line no-undef
+        if (!oControl || !sap.ui.core.Element || !sap.ui.core.mvc.View) {
+            return null;
+        }
+        if (oControl.getId &&
+            // eslint-disable-next-line no-undef
+            oControl instanceof sap.ui.core.mvc.View) {
+            return oControl;
+        } else {
+            return this.getControlDirectView(oControl.getParent());
+        }
+        } catch (error) {
+            return null;
+        }
     }
 
     this.isControlInComponentId = function(oControl, sComponentId) {
@@ -540,36 +558,42 @@ var VyperUtil = function() {
         }
     }
 
+    this.getDirectComponent = function(oControl) {
+        try {
+        // eslint-disable-next-line no-undef
+        if (!oControl || !sap.ui.core.Element || !sap.ui.core.Component) {
+            return null;
+        }
+        if (oControl.getId &&
+            // eslint-disable-next-line no-undef
+            oControl instanceof sap.ui.core.UIComponent) {
+            return oControl;
+        } else {
+            return this.getDirectComponent(oControl.getParent());
+        }
+        } catch (error) {
+            return null;
+        }
+    }
+
     this.addViewForControl = function(oControl, elemProperties) {
         // Get View name
         if(sap.ui.core.Element && sap.ui.core.mvc.View && sap.ui.core.UIComponent) {
-            var aViews = sap.ui.core.Element.registry.filter(function (oElement) {
-                return oElement instanceof sap.ui.core.mvc.View;
-            });
-            for (let index = 0; index < aViews.length; index++) {
-                var oView = aViews[index];
-                if(oView.getId() && oControl.getId() &&
-                this.isControlInViewId(oControl, oView.getId())) {
-                    elemProperties.push({
-                        'viewId': oView.getId()
-                    });
-                    elemProperties.push({
-                        'viewName': oView.getViewName()
-                    });
-                    break;
-                }
+            var oView = this.getControlDirectView(oControl);
+            if(oView && oView.getId() && oControl.getId()) {
+                elemProperties.push({
+                    'viewId': oView.getId()
+                });
+                elemProperties.push({
+                    'viewName': oView.getViewName()
+                });
             }
-            var aComponents = [].concat(sap.ui.core.Component.registry.filter(function (oElem) {
-                return oElem instanceof sap.ui.core.UIComponent;
-            }));
-            for (let j = 0; j < aComponents.length; j++) {
-                const oComponent = aComponents[j];
-                if(this.isControlInComponentId(oControl, oComponent.getId())) {
-                    elemProperties.push({
-                        'componentId': oComponent.getId()
-                    });
-                    return;
-                }
+            
+            const oComponent = this.getDirectComponent(oControl);
+            if(oComponent && oComponent.getId && oComponent.getId()) {
+                elemProperties.push({
+                    'componentId': oComponent.getId()
+                });
             }
         }
     }
