@@ -29,7 +29,7 @@ var ReuseActions = function(){
     this.click = function(oElm) {
         let oControl = sap.ui.getCore().byId(oElm.id);
         if(oControl && oControl.firePress) {
-            if(oControl.getVisible() && oControl.getEnabled()) {
+            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
                 oControl.firePress();
                 return true;
             }
@@ -50,14 +50,14 @@ var ReuseActions = function(){
 
         let oControl = sap.ui.getCore().byId(oElm.id);
         if(oControl && oControl.setValue) {
-            if(oControl.getVisible() && oControl.getEnabled()) {
+            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
                 oControl.setValue(val);
                 return true;
             }
         }
 
         if(oControl && oControl.setText) {
-            if(oControl.getVisible() && oControl.getEnabled()) {
+            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
                 oControl.setText(val);
                 return true;
             }
