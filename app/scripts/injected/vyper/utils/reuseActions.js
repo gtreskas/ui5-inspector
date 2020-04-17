@@ -1,4 +1,5 @@
 var ReuseDictionary = {
+    "no action": "ui5.common.locator.getDisplayedElement",
     "click": "ui5.common.userInteraction.click",
     "clear": "ui5.common.userInteraction.clear",
     "clearAndRetry": "ui5.common.userInteraction.clearAndRetry",
@@ -12,7 +13,9 @@ var ReuseDictionary = {
 var ReuseActions = function(){
     this.doAction = function(sAction, oElm, sVal) {
         if(sAction && oElm) {
-            if(sAction === "click") {
+            if(sAction === "no action"){
+                return true;
+            } else if(sAction === "click") {
                 return this.click(oElm);
             } else if(sAction === "clear" || sAction === "clearAndRetry") {
                 return this.setValue(oElm, "");

@@ -150,6 +150,7 @@
     var appInfo = new DataView('app-info');
 /////////////////////////Vyper//////////////////////////////////////////////////////////////
     var ReuseDictionary = {
+        "no action": "ui5.common.locator.getDisplayedElement",
         "click": "ui5.common.userInteraction.click",
         "clear": "ui5.common.userInteraction.clear",
         "clearAndRetry": "ui5.common.userInteraction.clearAndRetry",
@@ -205,7 +206,7 @@
                 jsonStr = strVal.substring(strVal.indexOf('{'), strVal.indexOf(';'));
                 let sel = JSON.parse(jsonStr);
                 let idx = null;
-                if(strVal.indexOf("index") !== -1 && strVal.split("index").length > 1) {
+                if(strVal.indexOf("index") !== -1 && strVal.split("index").length > 2) {
                     //Action  index
                     let idxStr = strVal.substring(strVal.indexOf("index"));
                     idxStr = idxStr.substring(idxStr.indexOf('=') + 1, idxStr.indexOf(';'))
@@ -231,7 +232,7 @@
                 }
                 
                 let sValEnter = "";
-                if(vyperAction.value !== "click" && strVal.indexOf("valueToEnter") !== -1 && strVal.split("valueToEnter").length > 1){
+                if(vyperAction.value !== "click" && vyperAction.value !== "no action" && strVal.indexOf("valueToEnter") !== -1 && strVal.split("valueToEnter").length > 2){
                     // Get value
                     sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
                     sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
@@ -256,25 +257,25 @@
         let currSel = {};
         deepExtend(currSel, sel, {});
         let idx = null;
-        if(currSel.elementProperties && currSel.elementProperties.index) {
+        if(currSel.elementProperties && currSel.elementProperties.index !== null && currSel.elementProperties.index !== undefined) {
             idx = currSel.elementProperties.index;
             delete currSel.elementProperties.index;
         } 
         var sSelector = JSON.stringify(currSel);
         var strSel = 'const selector = ' + sSelector + ';';
-        if(vyperAction.value !== "click") {
+        if(vyperAction.value !== "click" && vyperAction.value !== "no action") {
             strSel = strSel + 'const valueToEnter = "myValue";';
         }
-        if(idx) {
+        if(idx !== null && idx !== undefined) {
             strSel = strSel + 'const index = '+ idx + ';';
         }
 
         if(vyperAction.value) {
             strSel = strSel +  'await ' + ReuseDictionary[vyperAction.value] + '(selector';
-            if(vyperAction.value !== "click") {
+            if(vyperAction.value !== "click" && vyperAction.value !== "no action") {
                 strSel = strSel + ', valueToEnter'; 
             }
-            if(idx) {
+            if(idx !== null && idx !== undefined) {
                 strSel = strSel + ', index);'
             } else {
                 strSel = strSel + ');'
