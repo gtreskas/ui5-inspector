@@ -290,11 +290,23 @@
             }
 
             if(event.success !== undefined){
-                let success = event.success.value;
-                if(success) {
-                    successDom.style.display = "block";
-                    failedDom.style.display = "none";
+                let res = event.success.value;
+                if(res.resnum > 0) {
+                    if(res.actionSuccess) {
+                        successDom.innerText = "Success! Total number of elements found (without index):" + res.num;
+                        successDom.style.display = "block";
+                        failedDom.style.display = "none";
+                    } else if(res.resnum === 0){
+                        failedDom.innerText =  "Failed! Total number of elements found (without index):" + res.num;
+                        successDom.style.display = "none";
+                        failedDom.style.display = "block";
+                    } else {
+                        failedDom.innerText =  "Action failed! Total number of elements found (without index):" + res.num;
+                        successDom.style.display = "none";
+                        failedDom.style.display = "block";
+                    }
                 } else { 
+                    failedDom.innerText =  "Failed! Total number of elements found (without index):" + res.num;
                     successDom.style.display = "none";
                     failedDom.style.display = "block";
                 }
