@@ -231,8 +231,11 @@ var ElementCentricStrategy = function() {
         }
         
         if(oSelector) {
-            var aRes = ui5All(oSelector, nIndx);
             var aResAll = ui5All(oSelector);
+            var aRes = aResAll;
+            if(nIndx !== null) {
+                aRes = ui5All(oSelector, nIndx);
+            }
         }
 
         if(aRes) {

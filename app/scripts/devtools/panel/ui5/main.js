@@ -186,15 +186,34 @@
             try {
                 jsonStr = strVal.substring(strVal.indexOf('{'), strVal.indexOf(';'));
                 let sel = JSON.parse(jsonStr);
-                //Action  index
-                let idxStr = strVal.substring(strVal.indexOf("index"));
-                idxStr = idxStr.substring(idxStr.indexOf('=') + 1, idxStr.indexOf(';'))
-                let idx = 0;
-                if(idxStr && !Number.isNaN(parseInt(idxStr.trim()))){
-                    idx = parseInt(idxStr.trim());
+                let idx = null;
+                if(strVal.indexOf("index") !== -1 && strVal.split("index").length > 1) {
+                    //Action  index
+                    let idxStr = strVal.substring(strVal.indexOf("index"));
+                    idxStr = idxStr.substring(idxStr.indexOf('=') + 1, idxStr.indexOf(';'))
+                    if(idxStr && !Number.isNaN(parseInt(idxStr.trim()))){
+                        try {
+                            idx = parseInt(idxStr.trim());
+                            if(idx < 0) {
+                                let failedDom = document.getElementById("failed");
+                                failedDom.innerText =  "Failed! Index should be a non-negative integer number";
+                                return;
+                            }
+                        } catch (error) {
+                            let failedDom = document.getElementById("failed");
+                            failedDom.innerText =  "Failed! Index should be an integer number";
+                            return;
+                        }
+                    } else {
+                        let failedDom = document.getElementById("failed");
+                        failedDom.innerText =  "Failed! Index should be an integer number";
+                        return;
+                        
+                    }
                 }
+                
                 let sValEnter = "";
-                if(vyperAction.value !== "click" && strVal.indexOf("valueToEnter") !== -1){
+                if(vyperAction.value !== "click" && strVal.indexOf("valueToEnter") !== -1 && strVal.split("valueToEnter").length > 1){
                     // Get value
                     sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
                     sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
@@ -218,7 +237,7 @@
         if(!sel || isEmptyObj(sel))  return "No valid selector could be generated";
         let currSel = {};
         deepExtend(currSel, sel, {});
-        let idx = 0;
+        let idx = null;
         if(currSel.elementProperties && currSel.elementProperties.index) {
             idx = currSel.elementProperties.index;
             delete currSel.elementProperties.index;
@@ -228,14 +247,20 @@
         if(vyperAction.value !== "click") {
             strSel = strSel + 'const valueToEnter = "myValue";';
         }
-        strSel = strSel + 'const index = '+ idx + ';';
+        if(idx) {
+            strSel = strSel + 'const index = '+ idx + ';';
+        }
 
         if(vyperAction.value) {
-            strSel = strSel +  'await ' + ReuseDictionary[vyperAction.value] + '(selector, ';
+            strSel = strSel +  'await ' + ReuseDictionary[vyperAction.value] + '(selector';
             if(vyperAction.value !== "click") {
-                strSel = strSel + 'valueToEnter, '; 
+                strSel = strSel + ', valueToEnter'; 
             }
-            strSel = strSel + 'index);'
+            if(idx) {
+                strSel = strSel + ', index);'
+            } else {
+                strSel = strSel + ');'
+            }
         }
         return strSel;
     }
@@ -275,20 +300,20 @@
                 let res = event.success.value;
                 if(res.resnum > 0) {
                     if(res.actionSuccess) {
-                        successDom.innerText = "Success! Total number of elements found (without index):" + res.num;
+                        successDom.innerText = "Success! Total number of elements found:" + res.num;
                         successDom.style.display = "block";
                         failedDom.style.display = "none";
                     } else if(res.resnum === 0){
-                        failedDom.innerText =  "Failed! Total number of elements found (without index):" + res.num;
+                        failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
                         successDom.style.display = "none";
                         failedDom.style.display = "block";
                     } else {
-                        failedDom.innerText =  "Action failed! Total number of elements found (without index):" + res.num;
+                        failedDom.innerText =  "Action failed! Total number of elements found:" + res.num;
                         successDom.style.display = "none";
                         failedDom.style.display = "block";
                     }
                 } else { 
-                    failedDom.innerText =  "Failed! Total number of elements found (without index):" + res.num;
+                    failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
                     successDom.style.display = "none";
                     failedDom.style.display = "block";
                 }
