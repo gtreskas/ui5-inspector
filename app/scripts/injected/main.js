@@ -94,6 +94,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
         if(res.oRes && res.oRes.id) {
             res.actionSuccess = reuseAction.doAction(action, res.oRes, sVal);
         } 
+        delete res.oRes;
         //Results not found, or multiple found
         return res;
         

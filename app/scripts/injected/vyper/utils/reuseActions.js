@@ -32,10 +32,11 @@ var ReuseActions = function(){
     this.click = function(oElm) {
         let oControl = sap.ui.getCore().byId(oElm.id);
         if(oControl && oControl.firePress) {
-            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
-                oControl.firePress();
-                return true;
-            }
+            oControl.firePress();
+            return true;
+        } else if(oControl && oControl.fireSelect){
+            oControl.fireSelect();
+            return true;
         }
         if(oElm.click) {
             oElm.click();
@@ -53,17 +54,13 @@ var ReuseActions = function(){
 
         let oControl = sap.ui.getCore().byId(oElm.id);
         if(oControl && oControl.setValue) {
-            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
-                oControl.setValue(val);
-                return true;
-            }
+            oControl.setValue(val);
+            return true;
         }
 
         if(oControl && oControl.setText) {
-            if(oControl.getVisible && oControl.getVisible() && oControl.getEnabled && oControl.getEnabled()) {
-                oControl.setText(val);
-                return true;
-            }
+            oControl.setText(val);
+            return true;
         }
 
         let nElem = document.querySelector('input[id*="' + oElm.id + '"]');

@@ -306,6 +306,12 @@
                         successDom.innerText = "Success! Total number of elements found:" + res.num;
                         successDom.style.display = "block";
                         failedDom.style.display = "none";
+                        if(res.controlId) {
+                            port.postMessage({
+                                action: 'on-control-tree-hover',
+                                target: res.controlId
+                            });
+                        }
                     } else if(res.resnum === 0){
                         failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
                         successDom.style.display = "none";
@@ -314,6 +320,12 @@
                         failedDom.innerText =  "Action failed! Total number of elements found:" + res.num;
                         successDom.style.display = "none";
                         failedDom.style.display = "block";
+                        if(res.controlId) {
+                            port.postMessage({
+                                action: 'on-control-tree-hover',
+                                target: res.controlId
+                            });
+                        }
                     }
                 } else { 
                     failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
