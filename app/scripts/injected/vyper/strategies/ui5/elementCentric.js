@@ -225,6 +225,7 @@ var ElementCentricStrategy = function() {
 
     this.testLocator = function(oSelector, nIndx) {
         var res = {
+            controlId: null,
             oRes: null,
             num: 0,
             resnum: 0
@@ -243,6 +244,9 @@ var ElementCentricStrategy = function() {
             res.num = aResAll.length;
             if(aRes.length === 1) {
                 res.oRes = aRes[0];
+                if(aRes[0].id) {
+                    res.controlId = aRes[0].id;
+                } 
             }
         }
         return res;
@@ -469,11 +473,11 @@ var ElementCentricStrategy = function() {
             // Use index as fallback [use index as property]
             let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
             if(oResIdx && oResIdx.success){ 
-                oRes.selector.elementProperties["index"] = oResIdx.index;
-                return oRes.selector;
+                finalRes.selector.elementProperties["index"] = oResIdx.index;
+                return finalRes.selector;
             }
             // Finished nothing found [TODO Fallback --> Try with domProperties? -> Give back all the selectors? ]
-            return oRes.selector;
+            return finalRes.selector;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         } else if(oAggrElementBwt) {
             // CASE 2
@@ -656,11 +660,11 @@ var ElementCentricStrategy = function() {
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx && oResIdx.success){ 
-                 oRes.selector.elementProperties["index"] = oResIdx.index;
-                 return oRes.selector;
+                finalRes.selector.elementProperties["index"] = oResIdx.index;
+                 return finalRes.selector;
              }
             // Finished 
-            return oRes.selector;
+            return finalRes.selector;
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////
         } else if(oAggrElementExactly) {
             if(!oElemProperties) return {};
@@ -788,12 +792,12 @@ var ElementCentricStrategy = function() {
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx && oResIdx.success){ 
-                 oRes.selector.elementProperties["index"] = oResIdx.index;
-                 return oRes.selector;
+                finalRes.selector.elementProperties["index"] = oResIdx.index;
+                 return finalRes.selector;
              }
 
             // Finished 
-            return oRes.selector;
+            return finalRes.selector;
         } else {
             let oRes1 = {};
             let oRes2 = {};
@@ -917,12 +921,12 @@ var ElementCentricStrategy = function() {
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
              if(oResIdx && oResIdx.success){ 
-                 oRes.selector.elementProperties["index"] = oResIdx.index;
-                 return oRes.selector;
+                finalRes.selector.elementProperties["index"] = oResIdx.index;
+                 return finalRes.selector;
              }
 
             // Finished 
-            return oRes.selector;
+            return finalRes.selector;
         }
     }
 };
