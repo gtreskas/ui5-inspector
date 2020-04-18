@@ -260,7 +260,7 @@ var ElementCentricStrategy = function() {
         let oAggrElementExactly = this.checkIfAggregationExactly(oElemProperties);
         if(oAggrElement){
             // CASE 1
-            oRes = evaluator.evalElementProperties(oElemProperties);
+            oRes = evaluator.evalElementProperties(oElemProperties, true);
             if(oRes.success){
                 return oRes.selector;
             }
@@ -468,7 +468,7 @@ var ElementCentricStrategy = function() {
             }
             // Use index as fallback [use index as property]
             let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
-            if(oResIdx.success){ 
+            if(oResIdx && oResIdx.success){ 
                 oRes.selector.elementProperties["index"] = oResIdx.index;
                 return oRes.selector;
             }
@@ -655,7 +655,7 @@ var ElementCentricStrategy = function() {
 
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
-             if(oResIdx.success){ 
+             if(oResIdx && oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
              }
@@ -787,7 +787,7 @@ var ElementCentricStrategy = function() {
 
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
-             if(oResIdx.success){ 
+             if(oResIdx && oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
              }
@@ -916,7 +916,7 @@ var ElementCentricStrategy = function() {
 
              // Use index as fallback [use index as property]
              let oResIdx = evaluator.getSelectorIndex(finalRes.selector, sControlId, 0);
-             if(oResIdx.success){ 
+             if(oResIdx && oResIdx.success){ 
                  oRes.selector.elementProperties["index"] = oResIdx.index;
                  return oRes.selector;
              }
