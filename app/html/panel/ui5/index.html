@@ -26,13 +26,10 @@
                 <content for="control-tree-tab">
                     <splitter id="horizontal-splitter">
                         <!-- SplitContainer left side /start-->
-                        <start>
+                        <start style="min-width: 70%;min-height:50%;">
                             <splitter id="tree-splitter-splitter" orientation="vertical">
-                                <start>
-                                    <control-tree id="control-tree"></control-tree>
-                                </start>
-                                <end>
-                                    <table style="width:100%;border-top-style: ridge;">
+                                <start style="overflow: scroll;min-height:50%;min-width:50%;">
+                                    <table>
                                         <tr>
                                             <td>
                                                 Locator Type:
@@ -52,24 +49,7 @@
                                                     <option>clearFillAndRetry</option>
                                                 </select>
                                             </td> 
-                                            <td>
-                                                
-                                            </td>
-                                            <td>
-                                               
-                                            </td> 
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td> 
                                         </tr>
-                                        <tr></tr>
                                         <tr>
                                             <td>
                                                 <textarea id="vyperArea"></textarea>
@@ -77,7 +57,6 @@
                                                 </script>
                                             </td> 
                                         </tr>
-                                        <tr></tr>
                                         <tr>
                                             <td>
                                                 <button type="button" id="runVyper" style="width: 40px;height: 20px;">Run</button> 
@@ -89,31 +68,18 @@
                                                 <span id="failed">
                                                 </span>
                                             </td> 
-                                            <td>
-                                                
-                                            </td>
-                                            <td>
-                                               
-                                            </td> 
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td>
-                                            <td>
-                                            </td> 
                                         </tr> 
-                                    </table>
+                                    </table>                             
+                                </start>
+                                <end>
+                                    <control-tree id="control-tree"></control-tree>
                                 </end>
                             </splitter>
                         </start>
                         <!-- SplitContainer left side /ends-->
-
+                        
                         <!-- SplitContainer right side /start-->
-                        <end>
+                        <end style="width: auto !important; min-width: 30%;">
                             <!-- Control tree tabbar /start-->
                             <tabbar id="control-tree-tabbar">
                                 <tabs>
