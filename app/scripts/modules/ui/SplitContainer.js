@@ -36,7 +36,7 @@ function _applyInlineStylesForEndContainer(_splitterInstance, skipSizing) {
 
     $end.style.display = _splitterInstance._hideEndContainer ? 'none' : '';
     if (!skipSizing) {
-        $end.style.width = _splitterInstance._endContainerWidth || undefined;
+        //$end.style.width = _splitterInstance._endContainerWidth || undefined;
         $end.style.height = _splitterInstance._endContainerHeight || undefined;
     }
 }
