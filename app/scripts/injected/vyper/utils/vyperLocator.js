@@ -1019,7 +1019,7 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     Array.prototype.filter.call(aControls, function(oControl) {
       if (!oControl || !oControl.getId || !oControl.getId()) { return false;}
       var domElem = document.getElementById(oControl.getId());
-      if (domElem && oControl.getVisible && oControl.getVisible()) {
+      if (domElem) {
         //injectDataForProperties(domElem, oControl);
         aFoundNodes.push(domElem);
       }

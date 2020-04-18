@@ -35,6 +35,8 @@
 
     // Horizontal Splitter for 'Control Inspector' tab
     var controlInspectorHorizontalSplitter = new Splitter('horizontal-splitter', {
+        isEndContainerClosable: true,
+        hideEndContainer: false
         //endContainerWidth: '400px'
     });
 
@@ -435,8 +437,10 @@
             controlAggregations.setData(message.controlAggregations);
             controlEvents.setData(message.controlEvents);
 
-            // Set bindings count
-            document.querySelector('#tab-bindings count').innerHTML = '&nbsp;(' + Object.keys(message.controlBindings).length + ')';
+            if(message.controlBindings){
+                // Set bindings count
+                document.querySelector('#tab-bindings count').innerHTML = '&nbsp;(' + Object.keys(message.controlBindings).length + ')';
+            }
 
             // Close possible open binding info and/or methods info
             controlBindingsSplitter.hideEndContainer();
