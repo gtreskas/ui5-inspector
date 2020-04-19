@@ -49,8 +49,10 @@ chrome.devtools.panels.elements.createSidebarPane(
     "Vyper Non-UI5 Recorder",
     function(sidebar) {
         sidebar.setHeight('200px');
-        function updateElementProperties() { sidebar.setExpression("(" + page_getProperties.toString() + ")()"); }
-        updateElementProperties();
+        sidebar.setPage('/html/panel/non_ui5/index.html');
+        function updateElementProperties() {};
+        //updateElementProperties();
+        
         chrome.devtools.panels.elements.onSelectionChanged.addListener(updateElementProperties);
 });
 
