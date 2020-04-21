@@ -122,6 +122,7 @@ var secondDegreeAttributes = [
 var cssSelectors = require('../../utils/cssSelectorsGen');
 var xPathSelectors = require('../../utils/xPathGenerator');
 var IdAndTextCentricStrategy = function() {
+
     getAllIframes = function(oElement) {
         var aFrameSels = [];
         var aFrames = [];
@@ -137,10 +138,26 @@ var IdAndTextCentricStrategy = function() {
             for (let index = aFrames.length; index >= 0; index--) {
                 let oFrame = aFrames[index];
                 const strSel = cssSelectors.getSelector(oFrame);
-                aFrameSels.push(strSel);
+                if(testCssSelectors(strSel)){
+                    aFrameSels.push(strSel);
+                }
             }
         }
         return aFrameSels;
+    };
+
+    generateVyperCodeForCssIframe = function(oElement) {
+        aResSelectors = getAllIframes(oElement);
+        var mResults = {};
+        if(aResSelectors) {
+            for (let index = 0; index < aResSelectors.length; index++) {
+                const sSel = aResSelectors[index];
+                let sKey = "iframe " + (index + 1);
+                mResults[sKey] = { "selector": sSel, "action": ""};
+                mResults[sKey]["action"] = "non_ui5.common.locator.switchToIframe";
+            }
+        }
+        return mResults;
     };
 
     retrieveDomProperties = function(oNode) {
@@ -482,7 +499,7 @@ var IdAndTextCentricStrategy = function() {
     testAndSortAllXpaths= function(oElem, aResSelectors) {
         if(aResSelectors) {
             let aSelectors = validateSelectors(oElem, aResSelectors, true);
-            return sortShorterFirstCssSelectors(allSelectors);
+            return sortShorterFirstCssSelectors(aSelectors);
         }
         return [];
     }
@@ -541,7 +558,7 @@ var IdAndTextCentricStrategy = function() {
             aSelectorsAttrOwnAllNoIdLike
         );
 
-        if(mergedResults && mergedResults.length > 2){
+        if(mergedResults && mergedResults.length > 3){
             //Generate Vyper reuse methods
             return generateVyperCodeForCss(mergedResults);
         } else {
@@ -551,6 +568,36 @@ var IdAndTextCentricStrategy = function() {
             //Generate Vyper reuse methods
             return mergeUniqueArrays(generateVyperCodeForCss(mergedResults), generateVyperCodeForXPath(mergeXpaths));
         }
+    };
+
+    buildElementSelectors = function(oElement) {
+        var sCode = "";
+        var mFrameResults = {};
+        var mSelsActionResults = {};
+        if(oElement) {
+            mFrameResults = generateVyperCodeForCssIframe(oElement);
+            mSelsActionResults = getAllElementSelectors(oElement);
+            if(mFrameResults) {
+                let oFramesKeys = Object.keys(mFrameResults);
+                for (let index = 0; index < oFramesKeys.length; index++) {
+                    const sKey = oFramesKeys[index];
+                    let sSel = mFrameResults[sKey][selector];
+                    let sActions = mFrameResults[sKey][action];
+                    sCode = sCode + "await " + sActions + "(" + sSel + ");";
+                }
+            }
+            if(!mSelsActionResults) return "No valid selector could be generated";
+            if(mSelsActionResults) {
+                let oSelsKeys = Object.keys(mSelsActionResults);
+                for (let index = 0; index < oSelsKeys.length; index++) {
+                    const sKey = oSelsKeys[index];
+                    let sSel = mSelsActionResults[sKey][selector];
+                    let sActions = mSelsActionResults[sKey][action];
+                    sCode = sCode + "await " + sActions + "(" + sSel + ");";
+                }
+            }
+        }
+        return sCode;
     };
 };
 window.IdAndTextCentricStrategy = new IdAndTextCentricStrategy();
