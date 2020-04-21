@@ -49,6 +49,28 @@ const elem = document.getElementById('if1').contentDocument
 .getElementById('if3').contentDocument
 .getElementById('if4').contentDocument
 .getElementById('elementToBeFound')
+
+Contains innerText
+function contains(selector, text) {
+  var elements = document.querySelectorAll(selector);
+  return Array.prototype.filter.call(elements, function(element){
+    return RegExp(text).test(element.textContent);
+  });
+}
+contains('div', 'sometext'); // find "div" that contain "sometext"
+contains('div', /^sometext/); // find "div" that start with "sometext"
+contains('div', /sometext$/i); // find "div" that end with "sometext", case-insensitive
+
+by.cssContainingText 
+---------------------
+<ul>
+  <li class="pet">Dog</li>
+  <li class="pet">Cat</li>
+</ul>
+Code
+// Returns the li for the dog, but not cat.
+var dog = element(by.cssContainingText('.pet', 'Dog'));
+
 */
 
 'use strict';
