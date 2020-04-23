@@ -739,6 +739,7 @@ var Evaluator = function() {
                         //valUIProp !== "false" && valUIProp !== "true" && 
                         uiPropKey !== "id" &&
                         uiPropKey !== "ariaDescribedBy" &&
+                        uiPropKey !== "selectedItemId" &&
                         uiPropKey !== "labelFor" &&
                         uiPropKey !== "icon" &&
                         uiPropKey !== "src" &&

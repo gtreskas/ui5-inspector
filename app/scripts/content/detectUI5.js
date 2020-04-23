@@ -16,6 +16,11 @@
     scriptElementCentricVyperStrategy.src = chrome.extension.getURL('/scripts/injected/vyper/strategies/ui5/elementCentric.js');
     document.head.appendChild(scriptElementCentricVyperStrategy);
 
+    // Inject a the vyper util file in the current page
+    var scriptIdAndTextCentricStrategy = document.createElement('script');
+    scriptIdAndTextCentricStrategy.src = chrome.extension.getURL('/scripts/injected/vyper/strategies/nonui5/idAndTextCentric.js');
+    document.head.appendChild(scriptIdAndTextCentricStrategy);
+
      // Inject the jaro winkel distance util file in the current page
      //var jaroWinkelScript = document.createElement('script');
      //jaroWinkelScript.src = chrome.extension.getURL('/scripts/injected/vyper/utils/jaroWinBundle.js');
@@ -40,6 +45,13 @@
       */
      scriptElementCentricVyperStrategy.onload = function () {
         scriptElementCentricVyperStrategy.parentNode.removeChild(scriptElementCentricVyperStrategy);
+    };
+
+    /**
+      * Delete the injected file, when it is loaded.
+      */
+     scriptIdAndTextCentricStrategy.onload = function () {
+        scriptIdAndTextCentricStrategy.parentNode.removeChild(scriptIdAndTextCentricStrategy);
     };
 
      /**
