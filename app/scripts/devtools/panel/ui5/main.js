@@ -335,9 +335,15 @@
                         successDom.style.display = "none";
                         failedDom.style.display = "block";
                     } else {
-                        failedDom.innerText =  "Action failed! Total number of elements found:" + res.num;
-                        successDom.style.display = "none";
-                        failedDom.style.display = "block";
+                        if(res.resnum > 1) {
+                            failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
+                            successDom.style.display = "none";
+                            failedDom.style.display = "block";
+                        } else {
+                            failedDom.innerText =  "Action failed! Total number of elements found:" + res.num;
+                            successDom.style.display = "none";
+                            failedDom.style.display = "block";
+                        }
                         if(res.controlId) {
                             port.postMessage({
                                 action: 'on-control-tree-hover',
@@ -356,6 +362,7 @@
         'on-vyper-data': function(event) {
             let successDom = document.getElementById("success");
             let failedDom = document.getElementById("failed");
+            vyperAction.value = "no action";
             successDom.style.display = "none";
             failedDom.style.display = "none";
             let sel = event.selector;

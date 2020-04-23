@@ -3,18 +3,6 @@
 // Create a port with background page for continuous message communication
 var port = chrome.extension.connect({name: 'devtools-initialize-tabId-' + chrome.devtools.inspectedWindow.tabId});
 
-// The function below is executed in the context of the inspected page.
-var page_getProperties = function() {
-    var data = window.jQuery && $0 ? jQuery.data($0) : {};
-    // Make a shallow copy with a null prototype, so that sidebar does not
-    // expose prototype.
-    var props = Object.getOwnPropertyNames(data);
-    var copy = { __proto__: null };
-    for (var i = 0; i < props.length; ++i)
-    copy[props[i]] = data[props[i]];
-    return copy;
-}
-
 /**
  * Find the ID of the nearest UI5 control from the current selected element in Chrome elements panel.
  * @param {string} selectedElement - The ID of the selected element in Chrome elements panel
@@ -30,6 +18,19 @@ function _getNearestUI5ControlID(selectedElement) {
         element = element.parentNode;
     }
     return element.id;
+}
+
+/**
+ * Find the ID of the nearest UI5 control from the current selected element in Chrome elements panel.
+ * @param {string} selectedElement - The ID of the selected element in Chrome elements panel
+ * @returns {string} The ID of the nearest UI5 Control from the selectedElement
+ * @private
+ */
+function _getElementForVyper(selectedElement) {
+    debugger;
+    var element = selectedElement;
+    element.setAttribute("data-vyp-finder", "1");
+    return true;
 }
 
 chrome.devtools.panels.create('UI5', '/images/icon-128.png', '/html/panel/ui5/index.html', function (panel) {
@@ -50,10 +51,22 @@ chrome.devtools.panels.elements.createSidebarPane(
     function(sidebar) {
         sidebar.setHeight('200px');
         sidebar.setPage('/html/panel/non_ui5/index.html');
-        function updateElementProperties() {};
-        //updateElementProperties();
-        
-        chrome.devtools.panels.elements.onSelectionChanged.addListener(updateElementProperties);
+        chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
+            var getElementForVyper = _getElementForVyper.toString() + '_getElementForVyper($0);';
+            /* JSHINT evil: true */
+            chrome.devtools.inspectedWindow.eval(getElementForVyper, {useContentScriptContext: true}, function (isVypAttrSet) {
+                port.postMessage({
+                    action: 'on-select-element',
+                    isVyperAttrSet: isVypAttrSet
+                });
+            });
+        });
+        port.postMessage({
+            action: 'do-script-injection',
+            tabId: chrome.devtools.inspectedWindow.tabId,
+            file: '/scripts/content/main_nonui5.js'
+        });
+
 });
 
 chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
