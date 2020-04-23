@@ -27,8 +27,9 @@
      */
     ui5inspector.registerEventListener('ui-communication-with-injected-script', function communicationWithContentScript(event) {
         var action = event.detail.action;
-
-        if (messageHandler[action]) {
-            messageHandler[action](event);
+        if(action === 'on-select-element'){
+            if (messageHandler[action]) {
+                messageHandler[action](event);
+            }
         }
     });

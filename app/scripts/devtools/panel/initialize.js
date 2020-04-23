@@ -27,7 +27,7 @@ function _getNearestUI5ControlID(selectedElement) {
  * @private
  */
 function _getElementForVyper(selectedElement) {
-    debugger;
+    //debugger;
     var element = selectedElement;
     element.setAttribute("data-vyp-finder", "1");
     return true;
