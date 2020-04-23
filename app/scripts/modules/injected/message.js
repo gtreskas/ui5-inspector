@@ -132,5 +132,19 @@ module.exports = {
             };
         }
         document.dispatchEvent(new CustomEvent('ui5-communication-with-content-script', message));   
+    },
+
+    send: function (object) {
+        try {
+            var message = {
+                detail: JSON.parse(JSON.stringify(object))
+            };
+            
+        } catch (error) {
+            message = {
+                detail: JSON.parse(simpleStringify(object))
+            };
+        }
+        document.dispatchEvent(new CustomEvent('ui-communication-with-content-script', message));   
     }
 };

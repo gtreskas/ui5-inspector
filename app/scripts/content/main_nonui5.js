@@ -64,7 +64,7 @@
     /**
      * Listener for messages from the injected script.
      */
-    document.addEventListener('ui5-communication-with-content-script', function sendEvent(detectEvent) {
+    document.addEventListener('ui-communication-with-content-script', function sendEvent(detectEvent) {
         // Send the received event detail object to background page
         port.postMessage(detectEvent.detail);
     }, false);

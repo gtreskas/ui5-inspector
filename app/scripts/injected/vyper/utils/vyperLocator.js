@@ -1018,10 +1018,15 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     var aFoundNodes = [];
     Array.prototype.filter.call(aControls, function(oControl) {
       if (!oControl || !oControl.getId || !oControl.getId()) { return false;}
+      var aProperties = Object.keys(getControlAllProperties(oControl));
       var domElem = document.getElementById(oControl.getId());
-      if (domElem) {
-        //injectDataForProperties(domElem, oControl);
-        aFoundNodes.push(domElem);
+      if(domElem && aProperties && aProperties.hasOwnProperty("visible") && oControl.getVisible){
+        if(oControl.getVisible()) {
+          aFoundNodes.push(domElem);
+        }
+      } else if(domElem && aProperties && !aProperties.hasOwnProperty("visible")) {
+         //injectDataForProperties(domElem, oControl);
+         aFoundNodes.push(domElem);
       }
       return domElem;
     });
