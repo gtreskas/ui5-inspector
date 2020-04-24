@@ -146,6 +146,7 @@
     };
     var vyperButton = document.getElementById("runVyper");
     var vyperAction = document.getElementById("selectAction");
+    var vyperSumElems = document.getElementById("sumOfElems");
     var oCurrentSelector = {};
     //Attach action changed
     vyperAction.addEventListener("change", function(){
@@ -302,8 +303,9 @@
             if(event.success !== undefined){
                 let res = event.success.value;
                 if(res.resnum > 0) {
+                    vyperSumElems.innerText = "Total number of elements found:" + res.num;
                     if(res.actionSuccess) {
-                        successDom.innerText = "Success! Total number of elements found:" + res.num;
+                        successDom.innerText = "Success!";
                         successDom.style.display = "block";
                         failedDom.style.display = "none";
                         if(res.controlId) {
@@ -313,16 +315,16 @@
                             });
                         }
                     } else if(res.resnum === 0){
-                        failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
+                        failedDom.innerText =  "Failed!";
                         successDom.style.display = "none";
                         failedDom.style.display = "block";
                     } else {
                         if(res.resnum > 1) {
-                            failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
+                            failedDom.innerText =  "Failed!";
                             successDom.style.display = "none";
                             failedDom.style.display = "block";
                         } else {
-                            failedDom.innerText =  "Action failed! Total number of elements found:" + res.num;
+                            failedDom.innerText =  "Action failed!";
                             successDom.style.display = "none";
                             failedDom.style.display = "block";
                         }
@@ -334,7 +336,7 @@
                         }
                     }
                 } else { 
-                    failedDom.innerText =  "Failed! Total number of elements found:" + res.num;
+                    failedDom.innerText =  "Failed!";
                     successDom.style.display = "none";
                     failedDom.style.display = "block";
                 }
@@ -344,6 +346,7 @@
         'on-vyper-data': function(event) {
             let successDom = document.getElementById("success");
             let failedDom = document.getElementById("failed");
+            vyperSumElems.innerText = "";
             vyperAction.value = "no action";
             successDom.style.display = "none";
             failedDom.style.display = "none";
