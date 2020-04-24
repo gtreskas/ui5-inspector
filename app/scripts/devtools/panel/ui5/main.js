@@ -321,7 +321,7 @@
             if(event.success !== undefined){
                 let res = event.success.value;
                 if(res.resnum > 0) {
-                    vyperSumElems.innerText = "Total number of elements found:" + res.num;
+                    vyperSumElems.innerText = "Total number of elements found (without index):" + res.num;
                     if(res.actionSuccess) {
                         successDom.innerText = "Success!";
                         successDom.style.display = "block";
