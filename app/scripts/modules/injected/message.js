@@ -134,7 +134,7 @@ module.exports = {
         document.dispatchEvent(new CustomEvent('ui5-communication-with-content-script', message));   
     },
 
-    send: function (object) {
+    sendNonUI5: function (object) {
         try {
             var message = {
                 detail: JSON.parse(JSON.stringify(object))

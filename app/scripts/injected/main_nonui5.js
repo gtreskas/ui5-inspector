@@ -1,6 +1,7 @@
 
     'use strict';
     var ui5inspector = require('../modules/injected/ui5inspector.js');
+    var message = require('../modules/injected/message.js');
     var idAndTextCentric = require('./vyper/strategies/nonui5/idAndTextCentric');
     // Create global reference for the extension.
     ui5inspector.createReferences();
@@ -12,12 +13,30 @@
          * @param {Object} message
          */
         'on-select-element': function (oMess) {
-            console.log(oMess);
-            let mResults = {};
-            if (oMess.isVyperAttrSet && idAndTextCentric) {
-                let findElement = document.querySelectorAll("[data-vyp-finder='1']")[0];
-                findElement.removeAttribute("data-vyp-finder");
-                mResults = idAndTextCentric.buildElementSelectors(findElement);
+            let mVyperOptionCode = {};
+            let mResultFrameElem = {};
+            let findElement = null;
+            if (oMess.detail && oMess.detail.isVyperAttrSet && idAndTextCentric) {
+                let findElems = document.querySelectorAll("[data-vyp-finder='1']");
+                if(findElems && findElems.length === 1) {
+                    findElement = findElems[0];
+                } else {
+                    // Check frames
+                    mResultFrameElem = idAndTextCentric.getElementWithVyperAttribute();
+                    findElement = mResultFrameElem.element;
+                }
+                try {
+                    findElement.removeAttribute("data-vyp-finder");
+                    mVyperOptionCode = idAndTextCentric.buildElementSelectors(findElement, mResultFrameElem.frames);
+                } catch (error) {
+                    if(findElement){
+                        findElement.removeAttribute("data-vyp-finder");
+                    }
+                }
+                message.sendNonUI5({
+                    action: 'on-vyper-nonui5-data',
+                    vyperSourceOptions: mVyperOptionCode,
+                });
             }
         },
 
