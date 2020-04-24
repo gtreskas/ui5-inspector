@@ -30,6 +30,38 @@
     // Name space for message handler functions.
     var messageHandler = {
 
+        'on-vyper-nonui5-data': function(event) {
+            let mSourceCodeOptions = event.vyperSourceOptions;
+            if(!edt) {
+                var edt = nonUi5VyperEditor;
+                if(!edt) {
+                    edtDom = document.querySelector('.CodeMirror');
+                    if(edtDom && edtDom.CodeMirror) {
+                        edt = edtDom.CodeMirror;
+                    }
+                }
+            }
+            if(mSourceCodeOptions) {
+                let sFirstCode = "";
+                var aOptions = Object.keys(mSourceCodeOptions);
+                for (let index = 0; index < aOptions.length; index++) {
+                    const sKey = aOptions[index];
+                    //Add key and code in option save them globally for switching in an dictionary mSourceCodeOptions = global
+                    let sCode = mSourceCodeOptions[sKey];
+                    if(!sFirstCode) {
+                        sFirstCode = sCode;
+                    }
+                }
+                if(sFirstCode && beautifier) {
+                    let jsBeautifyExec = beautifier.js_beautify;
+                    let beautifiedJs = jsBeautifyExec(sFirstCode);
+                    edt.setOption("value", beautifiedJs);
+                } else {
+                    edt.setOption("value", "No valid selector could be generated");
+                }
+            }
+        },
+
         /**
          * Send object to background page.
          * @param {Object} message

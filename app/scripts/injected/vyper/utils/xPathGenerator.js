@@ -249,6 +249,4 @@ var xPathSelector = {
     return xpaths;
     }
 };
-module.exports = {
-    findAllXpaths: xPathSelector.findAllXpaths
-  };
+module.exports = xPathSelector;

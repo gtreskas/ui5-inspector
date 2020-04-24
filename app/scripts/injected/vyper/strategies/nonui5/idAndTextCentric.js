@@ -122,17 +122,67 @@ var secondDegreeAttributes = [
 var cssSelectors = require('../../utils/cssSelectorsGen');
 var xPathSelectors = require('../../utils/xPathGenerator');
 var IdAndTextCentricStrategy = function() {
-
-    this.getAllIframes = function(oElement) {
-        var aFrameSels = [];
-        var aFrames = [];
-        var oElm = oElement;
-        var elm = oElm.getRootNode();
-        if(elm.getElementById) {
-            if(window.frameElement) {
-                var ifrm = window.frameElement;
-            }
+    var framArray = [];
+    this.getIframe = function(oElement, oframeElement) {
+        let aElms = oframeElement.contentDocument.querySelectorAll("[data-vyp-finder='1']");
+        if(aElms && aElms.length === 1 && oElement.isSameNode(aElms[0])) {
+            return oframeElement;
+        } else {
+            frameChain = {};
+            framArray.push(frameChain);
+            frameChain["parent"] = oframeElement;
+            frameChain["children"] = [];
+            var aFrameElements = oframeElement.contentDocument.getElementsByTagName("iframe");
+            if(aFrameElements && aFrameElements.length > 0)
+                for (let index = 0; index < aFrameElements.length; index++) {
+                    let iframElem = aFrameElements[index];
+                    frameChain["children"].push(iframElem);
+                    let framElement = this.getIframe(oElement, iframElem);  
+                    if(framElement) return framElement;
+                }
         }
+        return null;
+    };
+
+    this.getIframeElement = function(oframeElement) {
+        frameChain = {};
+        framArray.push(frameChain);
+        frameChain["parent"] = oframeElement;
+        frameChain["children"] = [];
+        let aElms = oframeElement.contentDocument.querySelectorAll("[data-vyp-finder='1']");
+        if(aElms && aElms.length === 1) {
+            return {
+                "iframe": oframeElement,
+                "element": aElms[0]
+            };
+        } else {
+            var aFrameElements = oframeElement.contentDocument.getElementsByTagName("iframe");
+            if(aFrameElements && aFrameElements.length > 0)
+                for (let index = 0; index < aFrameElements.length; index++) {
+                    let iframElem = aFrameElements[index];
+                    frameChain["children"].push(iframElem);
+                    let oElm = this.getIframeElement(iframElem);  
+                    if(oElm) {
+                        return {
+                            "iframe": iframElem,
+                            "element": oElm
+                        };
+                    }
+                }
+        }
+        return null;
+    };
+
+    this.getTopDownAllIframes = function(aFrames) {
+        var aFrameSels = [];
+        
+        //Button up
+        // var elm = oElm.getRootNode();
+        //if(elm.getElementById) {
+        //    if(window.frameElement) {
+        //        var ifrm = window.frameElement;
+        //    }
+        // }
         //-->(window.parent != window.top)
         //document = selectedElement.getRootNode()
         //while --> dd.defaultView.document.isSameNode(this.window.top.document)
@@ -144,13 +194,38 @@ var IdAndTextCentricStrategy = function() {
                 aFrames.push(oElm);
             }
             oElm = oElm.parentNode;
+        }
+            const elem = document.getElementById('if1').contentDocument
+            .getElementById('if2').contentDocument
+            .getElementById('if3').contentDocument
+            .getElementById('if4').contentDocument
+            .getElementById('elementToBeFound')
+            
+        
+        */
+        /*if(window.top === window) {
+            let aElms = document.querySelectorAll("[data-vyp-finder='1']");
+            if(aElms && aElms.length === 1 && oElement.isSameNode(aElms[0])) {
+                return aFrameSels;
+            } else {
+                framArray = [];
+                var aFrameElements = document.getElementsByTagName("iframe");
+                for (let index = 0; index < aFrameElements.length; index++) {
+                    let iframElem = aFrameElements[index];
+                    let candFrame = this.getIframe(oElement, iframElem);
+                    if(candFrame){
+                        aFrames.push(candFrame);
+                        break;
+                    } 
+                }
+            }
         }*/
-        if(aFrames.length > 0) {
+        if(aFrames && aFrames.length > 0) {
              // Reverse n --> nearest, 0 --> farest
-            for (let index = aFrames.length; index >= 0; index--) {
+            for (let index = aFrames.length - 1; index >= 0; index--) {
                 let oFrame = aFrames[index];
                 const strSel = cssSelectors.getSelector(oFrame);
-                if(this.testCssSelectors(strSel)){
+                if(this.testCssSelectors(strSel, oFrame)){
                     aFrameSels.push(strSel);
                 }
             }
@@ -158,8 +233,52 @@ var IdAndTextCentricStrategy = function() {
         return aFrameSels;
     };
 
-    this.generateVyperCodeForCssIframe = function(oElement) {
-        aResSelectors = this.getAllIframes(oElement);
+    this.getIframeChain = function(oElmFrame, frameHierachyBuilder) {
+        if(framArray.length > 0) {
+            var nextFrame = oElmFrame;
+            for (let index = 0; index < framArray.length; index++) {
+                const oFrameMap = framArray[index];
+                if(oFrameMap && oFrameMap["children"] && oFrameMap["children"].length > 0) {
+                    for (let i = 0; i < oFrameMap["children"].length; i++) {
+                        const oChildFrame = oFrameMap["children"][i];
+                        if(oChildFrame.isSameNode(nextFrame)){
+                            frameHierachyBuilder.push(oFrameMap["parent"]);
+                            nextFrame = oFrameMap["parent"];
+                            this.getIframeChain(nextFrame, frameHierachyBuilder);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    this.getElementWithVyperAttribute = function() {
+        var oElm = null;
+        frameHierachyBuilder = [];
+        framArray = [];
+        if(window.top === window) {
+            var aFrameElements = document.getElementsByTagName("iframe");
+            for (let index = 0; index < aFrameElements.length; index++) {
+                let iframElem = aFrameElements[index];
+                let oElFramObj = this.getIframeElement(iframElem);
+                if(oElFramObj.element){
+                    oElm = oElFramObj.element;
+                    frameHierachyBuilder.push(oElFramObj.iframe);
+                    break;
+                } 
+            }
+            if(framArray.length > 0 && frameHierachyBuilder.length > 0) {
+                this.getIframeChain(frameHierachyBuilder[0], frameHierachyBuilder);
+            }
+        }
+        return {
+            "element": oElm,
+            "frames": frameHierachyBuilder
+        };
+    };
+
+    this.generateVyperCodeForCssIframe = function(aFrames) {
+        aResSelectors = this.getTopDownAllIframes(aFrames);
         var mResults = {};
         if(aResSelectors) {
             for (let index = 0; index < aResSelectors.length; index++) {
@@ -334,7 +453,7 @@ var IdAndTextCentricStrategy = function() {
                         let sIdSel = this.testId(val, sSelector, oElement);
                         if(sIdSel) return sIdSel;
                     } else {
-                        sSel = sSel + "[" + key + "='" + val + "']";
+                        sSel = sSel + "[" + key + '="' + val + '"]';
                         let aRes = this.containsText(sSel, oElement.textContent);
                         if(aRes && aRes.length === 1) {
                             sSel = sSel + ", text=" + oElement.textContent;
@@ -361,7 +480,7 @@ var IdAndTextCentricStrategy = function() {
                     let sIdSel =this.testId(val, sSelector, oElement);
                     if(sIdSel) return sIdSel;
                 } else {
-                    sSel = sSel + "[" + key + "='" + val + "']";
+                    sSel = sSel + "[" + key + '="' + val + '"]';
                     if(this.distance(sSel, oElement) === 0) {
                         return sSel;
                     }
@@ -397,7 +516,7 @@ var IdAndTextCentricStrategy = function() {
                         }
                     };
                 } else {
-                    sSel = sSel + "[" + key + "='" + val + "']";
+                    sSel = sSel + "[" + key + '="' + val + '"]';
                     if(this.distance(sSel, oElement) === 0) {
                         return sSel;
                     }
@@ -426,13 +545,13 @@ var IdAndTextCentricStrategy = function() {
         for (let index = 0; index < aSelectors.length; index++) {
             let sSel = aSelectors[index];
             if(isXpath) {
-                sSel = this.testXPathSelectors(sSel, oElement);
-                if(sSel) {
+                let oElem = this.testXPathSelectors(sSel, oElement);
+                if(oElem) {
                     aSels.push(sSel);
                 }
             } else {
-                sSel = this.testCssSelectors(sSel, oElement);
-                if(sSel) {
+                let oElem = this.testCssSelectors(sSel, oElement);
+                if(oElem) {
                     aSels.push(sSel);
                 }
             }
@@ -451,7 +570,6 @@ var IdAndTextCentricStrategy = function() {
             let aValidSelectorsAttrFirst = this.validateSelectors(oElement, aSelectorsAttrFirst);
             if(sSelector) {
                 mySel.push(sSelector);
-                if(validSels)
                 allSelectors = this.mergeUniqueArrays(mySel, aValidSelectorsAttrFirst);
             } else {
                 allSelectors = [].concat(aValidSelectorsAttrFirst);
@@ -494,6 +612,7 @@ var IdAndTextCentricStrategy = function() {
                 }
             }
         }
+        return mResults;
     };
 
     this.generateVyperCodeForXPath = function(aResSelectors) {
@@ -506,9 +625,10 @@ var IdAndTextCentricStrategy = function() {
                 mResults[sKey]["action"] = "non_ui5.common.locator.getElementByXPath";
             }
         }
+        return mResults;
     };
 
-    this.testAndSortAllXpaths= function(oElem, aResSelectors) {
+    this.testAndSortAllXpaths= function(aResSelectors, oElem) {
         if(aResSelectors) {
             let aSelectors = this.validateSelectors(oElem, aResSelectors, true);
             return this.sortShorterFirstCssSelectors(aSelectors);
@@ -578,24 +698,28 @@ var IdAndTextCentricStrategy = function() {
             aAllXpaths = xPathSelectors.findAllXpaths(oElement);
             let mergeXpaths = [].concat(this.testAndSortAllXpaths(aAllXpaths, oElement));
             //Generate Vyper reuse methods
-            return this.mergeUniqueArrays(this.generateVyperCodeForCss(mergedResults), this.generateVyperCodeForXPath(mergeXpaths));
+            let mResCss = this.generateVyperCodeForCss(mergedResults);
+            let mResXPath = this.generateVyperCodeForXPath(mergeXpaths);
+
+            return Object.assign(mResCss, mResXPath);
         }
     };
 
-    this.buildElementSelectors = function(oElement) {
-        var sCode = "";
+    this.buildElementSelectors = function(oElement, aFrames) {
+        var mOption = {};
         var mFrameResults = {};
         var mSelsActionResults = {};
         if(oElement) {
-            mFrameResults = this.generateVyperCodeForCssIframe(oElement);
+            mFrameResults = this.generateVyperCodeForCssIframe(aFrames);
             mSelsActionResults = this.getAllElementSelectors(oElement);
+            let sCodeFrag = "";
             if(mFrameResults) {
                 let oFramesKeys = Object.keys(mFrameResults);
                 for (let index = 0; index < oFramesKeys.length; index++) {
                     const sKey = oFramesKeys[index];
-                    let sSel = mFrameResults[sKey][selector];
-                    let sActions = mFrameResults[sKey][action];
-                    sCode = sCode + "await " + sActions + "(" + sSel + ");";
+                    let sSel = mFrameResults[sKey]["selector"];
+                    let sActions = mFrameResults[sKey]["action"];
+                    sCodeFrag = sCodeFrag + "await " + sActions + "(" + sSel + ");";
                 }
             }
             if(!mSelsActionResults) return "No valid selector could be generated";
@@ -603,10 +727,35 @@ var IdAndTextCentricStrategy = function() {
                 let oSelsKeys = Object.keys(mSelsActionResults);
                 for (let index = 0; index < oSelsKeys.length; index++) {
                     const sKey = oSelsKeys[index];
-                    let sSel = mSelsActionResults[sKey][selector];
-                    let sActions = mSelsActionResults[sKey][action];
-                    sCode = sCode + "await " + sActions + "(" + sSel + ");";
+                    let sSel = mSelsActionResults[sKey]["selector"];
+                    let sActions = mSelsActionResults[sKey]["action"];
+                    let sCode = sCodeFrag + "await " + sActions + "(" + sSel + ");";
+                    mOption[sKey]= sCode;
                 }
+            }
+        }
+        return mOption;
+    };
+
+    this.buildElementSelectorsStr = function(mSelsActionResults, mFrameResults) {
+        var sCode = "";
+        if(mFrameResults) {
+            let oFramesKeys = Object.keys(mFrameResults);
+            for (let index = 0; index < oFramesKeys.length; index++) {
+                const sKey = oFramesKeys[index];
+                let sSel = mFrameResults[sKey]["selector"];
+                let sActions = mFrameResults[sKey]["action"];
+                sCode = sCode + "await " + sActions + "(" + sSel + ");";
+            }
+        }
+        if(!mSelsActionResults) return "No valid selector could be generated";
+        if(mSelsActionResults) {
+            let oSelsKeys = Object.keys(mSelsActionResults);
+            for (let index = 0; index < oSelsKeys.length; index++) {
+                const sKey = oSelsKeys[index];
+                let sSel = mSelsActionResults[sKey]["selector"];
+                let sActions = mSelsActionResults[sKey]["action"];
+                sCode = sCode + "await " + sActions + "(" + sSel + ");";
             }
         }
         return sCode;

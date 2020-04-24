@@ -49,7 +49,7 @@ chrome.devtools.panels.create('UI5', '/images/icon-128.png', '/html/panel/ui5/in
 chrome.devtools.panels.elements.createSidebarPane(
     "Vyper Non-UI5 Recorder",
     function(sidebar) {
-        sidebar.setHeight('200px');
+        sidebar.setHeight('100px');
         sidebar.setPage('/html/panel/non_ui5/index.html');
         chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
             var getElementForVyper = _getElementForVyper.toString() + '_getElementForVyper($0);';
