@@ -168,6 +168,23 @@
         edt.setOption("value", beautifiedJs);
     });
 
+    function tryParseJSON (jsonString){
+        try {
+            var o = JSON.parse(jsonString);
+    
+            // Handle non-exception-throwing cases:
+            // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+            // but... JSON.parse(null) returns null, and typeof null === "object",
+            // so we must check for that, too. Thankfully, null is falsey, so this suffices:
+            if (o && typeof o === "object") {
+                return o;
+            }
+        }
+        catch (e) { }
+    
+        return false;
+    };
+
 
     // Attach run vyper event
     vyperButton.addEventListener("click", function(){
@@ -190,7 +207,16 @@
         if(strVal && vyperAction.value && strVal.indexOf('{') !== -1) {
             try {
                 jsonStr = strVal.substring(strVal.indexOf('{'), strVal.indexOf(';'));
-                let sel = JSON.parse(jsonStr);
+                //let sel = JSON.parse(jsonStr);
+                let sel = tryParseJSON(jsonStr);
+                if(sel === false) {
+                    let failedDom = document.getElementById("failed");
+                    failedDom.innerText =  "Failed! Parsing issue with selector";
+                    failedDom.style.display = "block";
+                    let successDom = document.getElementById("success");
+                    successDom.style.display = "none";
+                    return;
+                }
                 let idx = null;
                 if(strVal.indexOf("index") !== -1 && strVal.split("index").length > 2) {
                     //Action  index
@@ -202,16 +228,25 @@
                             if(idx < 0) {
                                 let failedDom = document.getElementById("failed");
                                 failedDom.innerText =  "Failed! Index should be a non-negative integer number";
+                                failedDom.style.display = "block";
+                                let successDom = document.getElementById("success");
+                                successDom.style.display = "none";
                                 return;
                             }
                         } catch (error) {
                             let failedDom = document.getElementById("failed");
                             failedDom.innerText =  "Failed! Index should be an integer number";
+                            failedDom.style.display = "block";
+                            let successDom = document.getElementById("success");
+                            successDom.style.display = "none";
                             return;
                         }
                     } else {
                         let failedDom = document.getElementById("failed");
                         failedDom.innerText =  "Failed! Index should be an integer number";
+                        failedDom.style.display = "block";
+                        let successDom = document.getElementById("success");
+                        successDom.style.display = "none";
                         return;
                         
                     }
@@ -231,6 +266,11 @@
                     methodVyp: {"method": vyperAction.value, "index": idx, "entValue": sValEnter}
                 });
             } catch (error) {
+                let failedDom = document.getElementById("failed");
+                failedDom.innerText =  "Failed! Something went wrong with the parsing of the information";
+                failedDom.style.display = "block";
+                let successDom = document.getElementById("success");
+                successDom.style.display = "none";
                 throw new Error("Something went wrong with the parsing of the information");
             }
         } else {
