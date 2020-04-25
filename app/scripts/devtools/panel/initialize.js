@@ -3,6 +3,7 @@
 // Create a port with background page for continuous message communication
 var port = chrome.extension.connect({name: 'devtools-initialize-tabId-' + chrome.devtools.inspectedWindow.tabId});
 
+var sideBarNonUI5 = null;
 /**
  * Find the ID of the nearest UI5 control from the current selected element in Chrome elements panel.
  * @param {string} selectedElement - The ID of the selected element in Chrome elements panel
@@ -27,6 +28,12 @@ function _getNearestUI5ControlID(selectedElement) {
  * @private
  */
 function _getElementForVyper(selectedElement) {
+    let findElems = document.querySelectorAll("[data-vyp-finder='1']");
+    if(findElems && findElems.length > 0) {
+        for (let index = 0; index < findElems.length; index++) {
+            findElems[index].removeAttribute("data-vyp-finder");   
+        }
+    }
     //debugger;
     var element = selectedElement;
     element.setAttribute("data-vyp-finder", "1");
@@ -49,6 +56,7 @@ chrome.devtools.panels.create('UI5', '/images/icon-128.png', '/html/panel/ui5/in
 chrome.devtools.panels.elements.createSidebarPane(
     "Vyper Non-UI5 Recorder",
     function(sidebar) {
+        sideBarNonUI5 = sidebar;
         sidebar.setHeight('100px');
         sidebar.setPage('/html/panel/non_ui5/index.html');
         chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
@@ -67,6 +75,20 @@ chrome.devtools.panels.elements.createSidebarPane(
             file: '/scripts/content/main_nonui5.js'
         });
 
+});
+
+// Restart everything when the URL is changed
+chrome.devtools.network.onNavigated.addListener(function () {
+   // chrome.devtools.inspectedWindow.reload();
+    if(sideBarNonUI5) {
+        sideBarNonUI5.setHeight('100px');
+        sideBarNonUI5.setPage('/html/panel/non_ui5/index.html');
+        port.postMessage({
+            action: 'do-script-injection',
+            tabId: chrome.devtools.inspectedWindow.tabId,
+            file: '/scripts/content/main_nonui5.js'
+        });
+    }
 });
 
 chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {

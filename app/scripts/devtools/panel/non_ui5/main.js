@@ -3,7 +3,7 @@
 
     // Create a port with background page for continuous message communication
     // ================================================================================
-    var port = chrome.extension.connect({name: 'devtools-tabId-' + chrome.devtools.inspectedWindow.tabId});
+    var port = chrome.extension.connect({name: 'devtools-nonui5-tabId-' + chrome.devtools.inspectedWindow.tabId});
 
     // ================================================================================
     // Main controller for 'UI5' tab in devtools
@@ -18,7 +18,6 @@
     var utils = require('../../../modules/utils/utils.js');
     var beautifier = require('../../../../html/lib/beautify.js');
     var deepExtend = require('deep-extend');
-
    
 /////////////////////////Vyper//////////////////////////////////////////////////////////////
 
@@ -26,7 +25,7 @@
     // ================================================================================
     // Communication
     // ================================================================================
-
+    
     // Name space for message handler functions.
     var messageHandler = {
 
@@ -93,10 +92,5 @@
             sendResponse: sendResponse,
             actions: messageHandler
         });
-    });
-
-    // Restart everything when the URL is changed
-    chrome.devtools.network.onNavigated.addListener(function () {
-        //port.postMessage({action: 'do-ui5-detection'});
     });
 }());
