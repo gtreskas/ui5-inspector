@@ -1,4 +1,4 @@
-  
+// Inspired  
 //https://github.com/yifeikong/xpath_gen
 function unique(list, keyFn) {
     seen = new Set();
@@ -16,7 +16,13 @@ function unique(list, keyFn) {
     return result;
 }
 
+var _oContentDocument = null;
+
 var xPathSelector = {
+
+    setDocumentRoot: function(oContentDocument) {
+        _oContentDocument = oContentDocument;
+    },
 
     /**
      * get root element of a list of HTMLElement
@@ -56,10 +62,10 @@ var xPathSelector = {
      * Get xpath expression of an element, from root to this element, no attr will be used.
      *
      * @param {HTMLElement} element, which to find xpath of
-     * @param {HTMLElement} root, element as xpath root, by default, it's document
+     * @param {HTMLElement} root, element as xpath root, by default, it's content document
      * @return {string} xpath expression between root and element
      */
-    _findPathBetween: function(element, root=document) {
+    _findPathBetween: function(element, root=_oContentDocument) {
     let paths = [];
 
     for (; element && element.nodeType == Node.ELEMENT_NODE && element != root; element = element.parentNode) {
@@ -178,7 +184,7 @@ var xPathSelector = {
             currentElement.tagName != 'BODY') {
         upCount++;
         if (upCount > 10) {
-        break;  // 向上最多10次
+        break; 
         }
         for (let attribute of currentElement.attributes) {
         if (this.badAttributes.has(attribute.name))
@@ -231,22 +237,25 @@ var xPathSelector = {
      * find all xpaths possible based on id, class, name, text
      */
     findAllXpaths: function(element) {
-    let xpaths = []
-    for (let attr of ['id', 'name', 'class']) {
+        if(!_oContentDocument) {
+            _oContentDocument = document;
+        }
+        let xpaths = []
+        for (let attr of ['id', 'name', 'class']) {
+            for (let relative of [true, false]) {
+            let xpath = this.findXpathByAttr(element, attr, relative);
+            console.log(`find xpath for ${element.tagName} by ${attr}, relative: ${relative}: ${xpath}`)
+            if (xpath)
+                xpaths.push(xpath)
+            }
+        }
         for (let relative of [true, false]) {
-        let xpath = this.findXpathByAttr(element, attr, relative);
-        console.log(`find xpath for ${element.tagName} by ${attr}, relative: ${relative}: ${xpath}`)
-        if (xpath)
+            let xpath = this.findXpathByText(element, relative);
+            if (xpath)
             xpaths.push(xpath)
         }
-    }
-    for (let relative of [true, false]) {
-        let xpath = this.findXpathByText(element, relative);
-        if (xpath)
-        xpaths.push(xpath)
-    }
-    xpaths = unique(xpaths)
-    return xpaths;
+        xpaths = unique(xpaths)
+        return xpaths;
     }
 };
 module.exports = xPathSelector;

@@ -319,18 +319,18 @@ var IdAndTextCentricStrategy = function() {
         return domProperties;
     };
 
-    this.containsText = function(selector, text) {
-        var elements = document.querySelectorAll(selector);
+    this.containsText = function(selector, text, contentDocument) {
+        var elements = contentDocument.querySelectorAll(selector);
         return Array.prototype.filter.call(elements, function(element){
           return RegExp(text).test(element.textContent);
         });
     };
 
-    this.distance = function(sSelector, oElem, isXpath) {
+    this.distance = function(sSelector, oElem, contentDocument, isXpath) {
         var aElms = [];
         if(sSelector){
             if(isXpath) {
-                let xPathRes = document.evaluate(sXpathSelector, document, null, XPathResult.ANY_TYPE, null);
+                let xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ANY_TYPE, null);
                 let oElem = xPathRes.iterateNext(); 
                 if(!oElem) {
                     return 99;
@@ -341,16 +341,16 @@ var IdAndTextCentricStrategy = function() {
                     count++;
                 } 
                 if(count === 1){
-                    if(this.testXPathSelectors(sSelector, oElem)){
+                    if(this.testXPathSelectors(sSelector, oElem, contentDocument)){
                         return 0;
                     }
                 }
                 return count + 1;
             } else {
-                aElms = document.querySelectorAll(sSelector);
+                aElms = contentDocument.querySelectorAll(sSelector);
                 if(aElms.length === 0) return  99;
                 if(aElms.length === 1) {
-                    if(this.testCssSelectors(sSelector, oElem)){
+                    if(this.testCssSelectors(sSelector, oElem, contentDocument)){
                         return 0;
                     }
                 }
@@ -360,13 +360,13 @@ var IdAndTextCentricStrategy = function() {
         return 999;
     };
 
-    this.testCssSelectors= function(sSelector, oElement) {
+    this.testCssSelectors= function(sSelector, oElement, contentDocument) {
         if(sSelector && oElement){
-            if(document.querySelectorAll(sSelector).length > 1 ||
-            document.querySelectorAll(sSelector).length === 0) {
+            if(contentDocument.querySelectorAll(sSelector).length > 1 ||
+            contentDocument.querySelectorAll(sSelector).length === 0) {
                 return null;
             }
-            let oElem = document.querySelector(sSelector);
+            let oElem = contentDocument.querySelector(sSelector);
             if(oElement.isEqualNode(oElem) &&
                 oElement.isSameNode(oElem)){
                     return oElem;
@@ -375,9 +375,9 @@ var IdAndTextCentricStrategy = function() {
         return null;
     };
 
-    this.testXPathSelectors = function(sXpathSelector, oElement) {
+    this.testXPathSelectors = function(sXpathSelector, oElement, contentDocument) {
         if(sXpathSelector && oElement){
-            var xPathRes = document.evaluate(sXpathSelector, document, null, XPathResult.ANY_TYPE, null);
+            var xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ANY_TYPE, null);
             var oElem = xPathRes.iterateNext(); 
             if(!oElem || xPathRes.iterateNext()) {
                 return null;
@@ -411,7 +411,7 @@ var IdAndTextCentricStrategy = function() {
         return aAttrNames;
     };
 
-    this.testId = function (sId, sSelector, oElem){
+    this.testId = function (sId, sSelector, oElem, contentDocument){
         var conC = ['-','_','.',':','[',']','/'];
         
         for (let index = 0; index < conC.length; index++) {
@@ -430,7 +430,7 @@ var IdAndTextCentricStrategy = function() {
                 } else {
                     sSel = sSelector + "[id='" + sPart + "']";
                 }
-                if(this.distance(sSel, oElem) === 0) {
+                if(this.distance(sSel, oElem, contentDocument) === 0) {
                     return sSel;
                 }
             }
@@ -438,7 +438,7 @@ var IdAndTextCentricStrategy = function() {
         return null;
     };
 
-    this.getSelectorsEachAtributeWithText = function(oElement) {
+    this.getSelectorsEachAtributeWithText = function(oElement, contentDocument) {
         if(oElement.textContent){
             let aAttrs = this.retrieveDomProperties(oElement);
             let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
@@ -450,11 +450,11 @@ var IdAndTextCentricStrategy = function() {
                 if(key !== "nodeName") {
                     let sSel = sSelector;
                     if(key === "id") {
-                        let sIdSel = this.testId(val, sSelector, oElement);
+                        let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                         if(sIdSel) return sIdSel;
                     } else {
                         sSel = sSel + "[" + key + '="' + val + '"]';
-                        let aRes = this.containsText(sSel, oElement.textContent);
+                        let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
                         if(aRes && aRes.length === 1) {
                             sSel = sSel + ", text=" + oElement.textContent;
                             return sSel;
@@ -466,7 +466,7 @@ var IdAndTextCentricStrategy = function() {
         return null;
     };
 
-    this.getSelectorsEachAtribute = function(oElement) {
+    this.getSelectorsEachAtribute = function(oElement, contentDocument) {
         let aAttrs = this.retrieveDomProperties(oElement);
         let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
         let sSelector = oAttr["nodeName"];
@@ -477,11 +477,11 @@ var IdAndTextCentricStrategy = function() {
             if(key !== "nodeName") {
                 let sSel = sSelector;
                 if(key === "id") {
-                    let sIdSel =this.testId(val, sSelector, oElement);
+                    let sIdSel =this.testId(val, sSelector, oElement, contentDocument);
                     if(sIdSel) return sIdSel;
                 } else {
                     sSel = sSel + "[" + key + '="' + val + '"]';
-                    if(this.distance(sSel, oElement) === 0) {
+                    if(this.distance(sSel, oElement, contentDocument) === 0) {
                         return sSel;
                     }
                 }
@@ -490,8 +490,36 @@ var IdAndTextCentricStrategy = function() {
         return null;
     };
 
+    this.combiCandAttrs = function(oElement, contentDocument) {
+        let aAttrs = this.retrieveDomProperties(oElement);
+        let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
+        let sSelector = oAttr["nodeName"];
+        let dist = 999;
+        if(aCandAttributes) {
+            let sSel = sSelector;
+            for (let index = 0; index < aCandAttributes.length; index++) {
+                const oAttr = aCandAttributes[index];
+                let key = Object.keys(oAttr)[0];
+                let val = oAttr[key];
+                if(key !== "nodeName") {
+                    if(key === "id") {
+                        let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
+                        if(sIdSel) return sIdSel;
+                    } else {
+                        sSel = sSel + "[" + key + '="' + val + '"]';
+                        let dSel = this.distance(sSel, oElement, contentDocument)
+                        if(dSel < dist) {
+                            dist = dSel;
+                        }
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     var aCandAttributes = [];
-    this.getSelectorsEachTogetherAtribute = function(oElement) {
+    this.getSelectorsEachTogetherAtribute = function(oElement, contentDocument) {
         let aAttrs = this.retrieveDomProperties(oElement);
         let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
         let sSelector = oAttr["nodeName"];
@@ -504,26 +532,19 @@ var IdAndTextCentricStrategy = function() {
             if(key !== "nodeName") {
                 
                 if(key === "id") {
-                    let  sIdSel = this.testId(val, sSelector, oElement);
-                    if(sIdSel) {
-                        let dId = this.distance(sIdSel, oElement)
-                        if(dId < dist) {
-                            sSel = sIdSel;
-                            aCandAttributes.push(oAttr);
-                            if(aCandAttributes.length > 3) {
-                                aCandAttributes.shift();
-                            }
-                        }
-                    };
+                    let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
+                    if(sIdSel) return sIdSel;
                 } else {
-                    sSel = sSel + "[" + key + '="' + val + '"]';
-                    if(this.distance(sSel, oElement) === 0) {
-                        return sSel;
+                    let sSelNew = sSel + "[" + key + '="' + val + '"]';
+                    if(this.distance(sSelNew, oElement, contentDocument) === 0) {
+                        return sSelNew;
                     }
-                    if(sSel) {
-                        let dSel = this.distance(sSel, oElement)
+                    if(sSelNew) {
+                        let dSel = this.distance(sSelNew, oElement, contentDocument)
                         if(dSel < dist) {
-                            sSel = dSel;
+                            dist = dSel;
+                            sSel = sSelNew;
+                            aCandAttributes.push(oAttr);
                             if(aCandAttributes.length > 3) {
                                 aCandAttributes.shift();
                             }
@@ -540,17 +561,17 @@ var IdAndTextCentricStrategy = function() {
         return aItems1.concat(aItems2.filter((item) => aItems1.indexOf(item) < 0))
     };
 
-    this.validateSelectors= function(oElement, aSelectors, isXpath){
+    this.validateSelectors= function(oElement, aSelectors, contentDocument, isXpath){
         var aSels = [];
         for (let index = 0; index < aSelectors.length; index++) {
             let sSel = aSelectors[index];
             if(isXpath) {
-                let oElem = this.testXPathSelectors(sSel, oElement);
+                let oElem = this.testXPathSelectors(sSel, oElement, contentDocument);
                 if(oElem) {
                     aSels.push(sSel);
                 }
             } else {
-                let oElem = this.testCssSelectors(sSel, oElement);
+                let oElem = this.testCssSelectors(sSel, oElement, contentDocument);
                 if(oElem) {
                     aSels.push(sSel);
                 }
@@ -564,10 +585,10 @@ var IdAndTextCentricStrategy = function() {
         aSelectorsAttrFirstSec,
         aSelectorsAttrFirstSecNoId,
         aSelectorsAttrOwnAll,
-        aSelectorsAttrOwnAllNoIdLike){
+        aSelectorsAttrOwnAllNoIdLike, contentDocument){
             let allSelectors = [];
             let mySel = [];
-            let aValidSelectorsAttrFirst = this.validateSelectors(oElement, aSelectorsAttrFirst);
+            let aValidSelectorsAttrFirst = this.validateSelectors(oElement, aSelectorsAttrFirst, contentDocument);
             if(sSelector) {
                 mySel.push(sSelector);
                 allSelectors = this.mergeUniqueArrays(mySel, aValidSelectorsAttrFirst);
@@ -575,16 +596,16 @@ var IdAndTextCentricStrategy = function() {
                 allSelectors = [].concat(aValidSelectorsAttrFirst);
             }
 
-            let aValidSelectorsAttrFirstSec = this.validateSelectors(oElement, aSelectorsAttrFirstSec);
+            let aValidSelectorsAttrFirstSec = this.validateSelectors(oElement, aSelectorsAttrFirstSec, contentDocument);
             allSelectors = this.mergeUniqueArrays(allSelectors, aValidSelectorsAttrFirstSec);
 
-            let aValidSelectorsAttrFirstSecNoId = this.validateSelectors(oElement, aSelectorsAttrFirstSecNoId);
+            let aValidSelectorsAttrFirstSecNoId = this.validateSelectors(oElement, aSelectorsAttrFirstSecNoId, contentDocument);
             allSelectors = this.mergeUniqueArrays(allSelectors, aValidSelectorsAttrFirstSecNoId);
 
-            let aValidSelectorsAttrOwnAll = this.validateSelectors(oElement, aSelectorsAttrOwnAll);
+            let aValidSelectorsAttrOwnAll = this.validateSelectors(oElement, aSelectorsAttrOwnAll, contentDocument);
             allSelectors = this.mergeUniqueArrays(allSelectors, aValidSelectorsAttrOwnAll);
 
-            let aValidSelectorsAttrOwnAllNoIdLike = this.validateSelectors(oElement, aSelectorsAttrOwnAllNoIdLike);
+            let aValidSelectorsAttrOwnAllNoIdLike = this.validateSelectors(oElement, aSelectorsAttrOwnAllNoIdLike, contentDocument);
             allSelectors = this.mergeUniqueArrays(allSelectors, aValidSelectorsAttrOwnAllNoIdLike);
             
             return this.sortShorterFirstCssSelectors(allSelectors);
@@ -628,33 +649,33 @@ var IdAndTextCentricStrategy = function() {
         return mResults;
     };
 
-    this.testAndSortAllXpaths= function(aResSelectors, oElem) {
+    this.testAndSortAllXpaths= function(aResSelectors, oElem, contentDocument) {
         if(aResSelectors) {
-            let aSelectors = this.validateSelectors(oElem, aResSelectors, true);
+            let aSelectors = this.validateSelectors(oElem, aResSelectors, contentDocument, true);
             return this.sortShorterFirstCssSelectors(aSelectors);
         }
         return [];
     }
 
-    this.getAllElementSelectors = function(oElement) {
+    this.getAllElementSelectors = function(oElement, oContentDocument) {
         aCandAttributes = [];
-        let sSelector = this.getSelectorsEachAtribute(oElement);
+        let sSelector = this.getSelectorsEachAtribute(oElement, oContentDocument);
         if(!sSelector) {
-            sSelector = this.getSelectorsEachTogetherAtribute(oElement);
+            sSelector = this.getSelectorsEachTogetherAtribute(oElement, oContentDocument);
             if(!sSelector) {
 
                 if(aCandAttributes.length > 0) {
-                    sSelector = this.combiCandAttrs(oElement);
+                    sSelector = this.combiCandAttrs(oElement, oContentDocument);
                     if(!sSelector) {
-                        sSelector = this.getSelectorsEachAtributeWithText(oElement);
+                        sSelector = this.getSelectorsEachAtributeWithText(oElement, oContentDocument);
                     }
                 }
             }
         }
         //Use first degree attributes
-        let aSelectorsAttrFirst = cssSelectors.getSelectors(oElement, firstDegreeAttributes);
+        let aSelectorsAttrFirst = cssSelectors.getSelectors(oElement, oContentDocument, firstDegreeAttributes);
         //Use first degree + second degree
-        let aSelectorsAttrFirstSec = cssSelectors.getSelectors(oElement, this.mergeUniqueArrays(firstDegreeAttributes, secondDegreeAttributes));
+        let aSelectorsAttrFirstSec = cssSelectors.getSelectors(oElement, oContentDocument, this.mergeUniqueArrays(firstDegreeAttributes, secondDegreeAttributes));
         //Use first degree without id + second degree
         let aFirstDegreeAttrs = [].concat(firstDegreeAttributes);
         let aFilteredWithoutId = aFirstDegreeAttrs.filter(function(value){ 
@@ -663,11 +684,11 @@ var IdAndTextCentricStrategy = function() {
             value !== "data-sap-ui" && 
             value !== "aria-describedby";
         });
-        let aSelectorsAttrFirstSecNoId = cssSelectors.getSelectors(oElement, this.mergeUniqueArrays(aFilteredWithoutId, secondDegreeAttributes));
+        let aSelectorsAttrFirstSecNoId = cssSelectors.getSelectors(oElement, oContentDocument, this.mergeUniqueArrays(aFilteredWithoutId, secondDegreeAttributes));
         // Use all attributes given by element
         let aAttrs = this.retrieveDomProperties(oElement);
         let aAttrsName = this.getAllDomPropertyKeys(aAttrs) || [];
-        let aSelectorsAttrOwnAll = cssSelectors.getSelectors(oElement,aAttrsName);
+        let aSelectorsAttrOwnAll = cssSelectors.getSelectors(oElement,oContentDocument, aAttrsName);
         // Use all attributes except id like fields.
         aAttrs = this.retrieveDomProperties(oElement);
         aAttrsName = this.getAllDomPropertyKeys(aAttrs) || [];
@@ -677,7 +698,7 @@ var IdAndTextCentricStrategy = function() {
             value !== "data-sap-ui" && 
             value !== "aria-describedby";
         });
-        let aSelectorsAttrOwnAllNoIdLike = cssSelectors.getSelectors(oElement, aFilteredWithoutId);
+        let aSelectorsAttrOwnAllNoIdLike = cssSelectors.getSelectors(oElement, oContentDocument, aFilteredWithoutId);
 
         // Merge all results
         let mergedResults = this.mergeResultsIntoOneArray(
@@ -687,7 +708,8 @@ var IdAndTextCentricStrategy = function() {
             aSelectorsAttrFirstSec,
             aSelectorsAttrFirstSecNoId,
             aSelectorsAttrOwnAll,
-            aSelectorsAttrOwnAllNoIdLike
+            aSelectorsAttrOwnAllNoIdLike,
+            oContentDocument
         );
 
         if(mergedResults && mergedResults.length > 3){
@@ -695,8 +717,9 @@ var IdAndTextCentricStrategy = function() {
             return this.generateVyperCodeForCss(mergedResults);
         } else {
             // Fallback xPath
+            xPathSelectors.setDocumentRoot(oContentDocument);
             aAllXpaths = xPathSelectors.findAllXpaths(oElement);
-            let mergeXpaths = [].concat(this.testAndSortAllXpaths(aAllXpaths, oElement));
+            let mergeXpaths = [].concat(this.testAndSortAllXpaths(aAllXpaths, oElement, oContentDocument));
             //Generate Vyper reuse methods
             let mResCss = this.generateVyperCodeForCss(mergedResults);
             let mResXPath = this.generateVyperCodeForXPath(mergeXpaths);
@@ -709,9 +732,14 @@ var IdAndTextCentricStrategy = function() {
         var mOption = {};
         var mFrameResults = {};
         var mSelsActionResults = {};
+        var oContentDocument = document;
         if(oElement) {
             mFrameResults = this.generateVyperCodeForCssIframe(aFrames);
-            mSelsActionResults = this.getAllElementSelectors(oElement);
+            if(aFrames && aFrames.length > 0) {
+                let oContFrame = aFrames[aFrames.length - 1];
+                oContentDocument = oContFrame.contentDocument;
+            }
+            mSelsActionResults = this.getAllElementSelectors(oElement, oContentDocument);
             let sCodeFrag = "";
             if(mFrameResults) {
                 let oFramesKeys = Object.keys(mFrameResults);

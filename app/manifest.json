@@ -1,7 +1,7 @@
 {
     "manifest_version": 2,
-    "name": "UI5 Inspector",
-    "version": "0.9.9",
+    "name": "Vyper Spotlight",
+    "version": "1.0.0",
     "background": {
         "scripts": [
             "/scripts/background/main.js"
@@ -18,7 +18,7 @@
         }
     ],
     "content_security_policy": "default-src 'self'; style-src 'unsafe-inline';",
-    "description": "With the UI5 Inspector, you can easily debug and support your OpenUI5 or SAPUI5-based apps.",
+    "description": "With the Vyper Spotlight, you can easily debug and generate vyper selectors and try actions out.",
     "devtools_page": "/html/devtools/index.html",
     "icons": {
         "128": "/images/icon-128.png",
