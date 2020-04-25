@@ -1,9 +1,9 @@
-// Reference
-//https://github.com/afloesch/css-selector/blob/master/src/main.js
+// Inspired
+//https://github.com/afloesch/css-selector
 
 // check that selector is unique and matches the given html element
-function testSelector(element, selector) {
-    var check = document.querySelectorAll(selector);
+function testSelector(element, selector, contentDocument) {
+    var check = contentDocument.querySelectorAll(selector);
   
     if(check.length && check.length === 1 && check[0] === element) {
       return true;
@@ -57,7 +57,7 @@ function testSelector(element, selector) {
   
   // try to generate a unique selector for an html element based off of the set
   // attributes
-  function getUniqueAttributeSelector(element, attributes) {
+  function getUniqueAttributeSelector(element, attributes, contentDocument) {
     var selector = null;
   
     for(var i = 0; i < attributes.length; i++) {
@@ -71,7 +71,7 @@ function testSelector(element, selector) {
       }
   
       // if there's a selector and it's unique then break the loop and return it
-      if(s && testSelector(element, s)) {
+      if(s && testSelector(element, s, contentDocument)) {
         selector = s;
         break;
       }
@@ -112,7 +112,7 @@ function testSelector(element, selector) {
   
   // walk up the DOM from the element node given, until the BODY is reached, and return
   // a css selector from the journey
-  function getCssSelector(element, attributes) {
+  function getCssSelector(element, attributes, contentDocument) {
     var e = element;
     var string = "";
   
@@ -132,7 +132,7 @@ function testSelector(element, selector) {
         }
       }
   
-      if (testSelector(element, string)) {
+      if (testSelector(element, string, contentDocument)) {
         e = null;
         break;
       }
@@ -160,7 +160,7 @@ function testSelector(element, selector) {
   }
   
   // get a selector for the given element
-  function makeSelectors(element, multi, customAttributes, preferLink) {
+  function makeSelectors(element, multi, customAttributes, preferLink, contentDocument) {
   
     var selectors = [];
     var item = element;
@@ -186,10 +186,10 @@ function testSelector(element, selector) {
     }
   
     var anchorSelector = getLinkSelector(item);
-    var attrSelector = getUniqueAttributeSelector(item, attributes);
-    var cssSelector1 = getCssSelector(item, attributes);
-    var cssSelector2 = getCssSelector(item, []);
-    var cssSelector3 = getCssSelector(item, ["id", "name"]);
+    var attrSelector = getUniqueAttributeSelector(item, attributes, contentDocument);
+    var cssSelector1 = getCssSelector(item, attributes, contentDocument);
+    var cssSelector2 = getCssSelector(item, [], contentDocument);
+    var cssSelector3 = getCssSelector(item, ["id", "name"], contentDocument);
   
     if(anchorSelector) {
       selectors.push(anchorSelector);
@@ -216,12 +216,14 @@ function testSelector(element, selector) {
     return selectors;
   }
   
-  function getSelectors(oElem, attributes, link) {
-    return makeSelectors(oElem, true, attributes, link);
+  function getSelectors(oElem, contentDocument, attributes, link) {
+    if(!contentDocument) contentDocument = document;
+    return makeSelectors(oElem, true, attributes, link, contentDocument);
   }
   
-  function getSelector(oElem, attributes, link) {
-    return makeSelectors(oElem, false, attributes, link);
+  function getSelector(oElem, contentDocument, attributes, link) {
+    if(!contentDocument) contentDocument = document;
+    return makeSelectors(oElem, false, attributes, link, contentDocument);
   }
   
   module.exports = {

@@ -6,8 +6,8 @@
     <version>0.9.7</version>
     <packaging>pom</packaging>
 
-    <name>UI5 Inspector</name>
-    <description>With the UI5 Inspector, you can easily debug and support your OpenUI5 or SAPUI5-based apps.</description>
+    <name>Vyper Spotlight</name>
+    <description>With the Vyper Spotlight, you can easily debug and generate vyper selectors and try actions out.</description>
     <url>https://chrome.google.com/webstore/detail/ui5-inspector/bebecogbafbighhaildooiibipcnbngo</url>
 
     <licenses>
