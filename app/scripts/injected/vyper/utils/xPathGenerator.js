@@ -231,17 +231,21 @@ var xPathSelector = {
 
     badAttributes: new Set(['data-xpal', 'alt', 'async', 'cite', 'code', 'content', 'disabled',
     'download', 'enctype', 'for', 'href', 'hreflang', 'ping', 'poster',
-    'rel', 'src']),
+    'rel', 'src', 'lsdata', 'lsevents']),
 
     /**
      * find all xpaths possible based on id, class, name, text
      */
-    findAllXpaths: function(element) {
+    findAllXpaths: function(element, arrAttributes) {
         if(!_oContentDocument) {
             _oContentDocument = document;
         }
+        let allAttributes = ['id', 'name', 'class'];
+        if(arrAttributes && arrAttributes.length > 0) {
+            allAttributes = allAttributes.concat(arrAttributes);
+        }
         let xpaths = []
-        for (let attr of ['id', 'name', 'class']) {
+        for (let attr of allAttributes) {
             for (let relative of [true, false]) {
             let xpath = this.findXpathByAttr(element, attr, relative);
             console.log(`find xpath for ${element.tagName} by ${attr}, relative: ${relative}: ${xpath}`)
