@@ -261,7 +261,7 @@ var IdAndTextCentricStrategy = function() {
             for (let index = 0; index < aFrameElements.length; index++) {
                 let iframElem = aFrameElements[index];
                 let oElFramObj = this.getIframeElement(iframElem);
-                if(oElFramObj.element){
+                if(oElFramObj && oElFramObj.element){
                     oElm = oElFramObj.element;
                     frameHierachyBuilder.push(oElFramObj.iframe);
                     break;

@@ -46,7 +46,9 @@
      */
     ui5inspector.registerEventListener('ui-communication-with-injected-script', function communicationWithContentScript(event) {
         var action = event.detail.action;
-        if(action === 'on-select-element'){
+        if( 
+            action === 'on-select-element' || 
+            action === 'on-vyper-nonui5-data'){
             if (messageHandler[action]) {
                 messageHandler[action](event);
             }

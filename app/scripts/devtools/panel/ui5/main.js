@@ -18,6 +18,7 @@
     var DataView = require('../../../modules/ui/DataView.js');
     var Splitter = require('../../../modules/ui/SplitContainer.js');
     var deepExtend = require('deep-extend');
+
     // Apply theme
     // ================================================================================
     utils.applyTheme(chrome.devtools.panels.themeName);
@@ -396,7 +397,6 @@
                 overlayNoUI5Section.style.display = 'none';
                 overlayUnsupportedVersionSection.style.display = 'block';
             }
-
             port.postMessage({
                 action: 'do-script-injection',
                 tabId: chrome.devtools.inspectedWindow.tabId,
