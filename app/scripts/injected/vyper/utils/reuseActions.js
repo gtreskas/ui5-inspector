@@ -11,6 +11,49 @@ var ReuseDictionary = {
 };
 
 var ReuseActions = function(){
+    this.doNonUI5Action = function(sAction, oElm, sVal) {
+        if(sAction && oElm) {
+            if(sAction === "no action"){
+                return true;
+            } else if(sAction === "click") {
+                return this.clickNonUI5(oElm);
+            } else if(sAction === "clear" || sAction === "clearAndRetry") {
+                return this.setValueNonUI5(oElm, "");
+            } else if(sVal && sAction === "fill" || sAction === "fillAndRetry") {
+                return this.setValueNonUI5(oElm, sVal);
+            } else if(sVal && sAction === "clearAndFill" || sAction === "clearAndFillAndRetry") {
+                this.setValueNonUI5(oElm, "");
+                return this.setValueNonUI5(oElm, sVal);
+            }
+        }
+        return false;
+    },
+
+     //non_ui5.common.userInteraction.click
+     this.clickNonUI5 = function(oElm) {
+        if(oElm.click) {
+            oElm.click();
+            return true;
+        }
+        return false;
+    },
+
+    //non_ui5.common.userInteraction.clear
+    //non_ui5.common.userInteraction.clearAndRetry
+    //non_ui5.common.userInteraction.fill
+    //non_ui5.common.userInteraction.fillAndRetry
+    //non_ui5.common.userInteraction.clearAndFill
+    //non_ui5.common.userInteraction.clearAndFillAndRetry
+    this.setValueNonUI5 = function(oElm, val) {
+        if(oElm && (oElm.value !== null && oElm.value !== undefined)) {
+            oElm.value = val;
+            return true;
+        } 
+        return false;
+    }
+
+
+
     this.doAction = function(sAction, oElm, sVal) {
         if(sAction && oElm) {
             if(sAction === "no action"){

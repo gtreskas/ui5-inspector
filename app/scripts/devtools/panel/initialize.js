@@ -54,7 +54,7 @@ chrome.devtools.panels.create('UI5', '/images/icon-128.png', '/html/panel/ui5/in
 });
 
 chrome.devtools.panels.elements.createSidebarPane(
-    "Vyper Non-UI5 Recorder",
+    "Vyper Non-UI5 Spotlight",
     function(sidebar) {
         sideBarNonUI5 = sidebar;
         sidebar.setHeight('100px');

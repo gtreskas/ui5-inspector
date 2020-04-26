@@ -128,7 +128,7 @@ var IdAndTextCentricStrategy = function() {
         if(aElms && aElms.length === 1 && oElement.isSameNode(aElms[0])) {
             return oframeElement;
         } else {
-            frameChain = {};
+            let frameChain = {};
             framArray.push(frameChain);
             frameChain["parent"] = oframeElement;
             frameChain["children"] = [];
@@ -145,10 +145,11 @@ var IdAndTextCentricStrategy = function() {
     };
 
     this.getIframeElement = function(oframeElement) {
-        frameChain = {};
+        let frameChain = {};
         framArray.push(frameChain);
         frameChain["parent"] = oframeElement;
         frameChain["children"] = [];
+        if(oframeElement.contentDocument) return null;
         let aElms = oframeElement.contentDocument.querySelectorAll("[data-vyp-finder='1']");
         if(aElms && aElms.length === 1) {
             return {
@@ -163,10 +164,7 @@ var IdAndTextCentricStrategy = function() {
                     frameChain["children"].push(iframElem);
                     let oElm = this.getIframeElement(iframElem);  
                     if(oElm) {
-                        return {
-                            "iframe": iframElem,
-                            "element": oElm
-                        };
+                        return oElm;
                     }
                 }
         }
@@ -396,6 +394,40 @@ var IdAndTextCentricStrategy = function() {
         return null;
     };
 
+    ////TO BE CONSIDERED LATER IF INDEX IS NEEDED
+    /*
+      this.testXPathSelectors = function(sXpathSelector, oElement, contentDocument) {
+        if(sXpathSelector && oElement){
+            var xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+            var oElem = xPathRes.iterateNext();
+            if(!oElem) {
+                return null;
+            }
+            if(oElement.isEqualNode(oElem) &&
+                oElement.isSameNode(oElem)){
+                    return {
+                        "element": oElem,
+                        "index": 0
+                    };
+            }
+            let index = 1;
+            while (oElem && !oElement.isSameNode(oElem)) {
+                oElem = xPathRes.iterateNext();
+                if(oElement.isEqualNode(oElem) &&
+                oElement.isSameNode(oElem)){
+                    return {
+                        "element": oElem,
+                        "index": index
+                    };
+                }
+                index++;
+            }
+        }
+        return null;
+    };
+    
+    */
+
     this.getDomPropertyObject = function(aDomProps, sKey) {
         for (let index = 0; index < aDomProps.length; index++) {
             const oAttr = aDomProps[index];
@@ -418,7 +450,7 @@ var IdAndTextCentricStrategy = function() {
     };
 
     this.testId = function (sId, sSelector, oElem, contentDocument){
-        var conC = ['-','_','.',':','[',']','/'];
+        var conC = ['#','-','_','.',':','[',']','/'];
         
         for (let index = 0; index < conC.length; index++) {
             const sChar = conC[index];
@@ -431,10 +463,10 @@ var IdAndTextCentricStrategy = function() {
                     sPart = aConc[i];
                 }
                 let sSel = "";
-                if(i <= aConc.length - 2) {
-                    sSel = sSelector + "[id*='" + sPart + "']";
+                if(i <= aConc.length - 2 && sPart !== sId) {
+                    sSel = sSelector + '[id*="' + sPart + '"]';
                 } else {
-                    sSel = sSelector + "[id='" + sPart + "']";
+                    sSel = sSelector + '[id="' + sPart + '"]';
                 }
                 if(this.distance(sSel, oElem, contentDocument) === 0) {
                     return sSel;
@@ -459,14 +491,14 @@ var IdAndTextCentricStrategy = function() {
                     if(key === "id") {
                         let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                         if(sIdSel) aSels.push(sIdSel);
-                        sSel = sSel + "[" + key + '="' + val + '"]';
+                        sSel = sSel + '[' + key + '="' + val + '"]';
                         let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
                         if(aRes && aRes.length === 1) {
                             sSel = sSel + ", text=" + oElement.textContent;
                             aSels.push(sSel);
                         }
                     } else {
-                        sSel = sSel + "[" + key + '="' + val + '"]';
+                        sSel = sSel + '[' + key + '="' + val + '"]';
                         let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
                         if(aRes && aRes.length === 1) {
                             sSel = sSel + ", text=" + oElement.textContent;
@@ -494,10 +526,14 @@ var IdAndTextCentricStrategy = function() {
                     let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                     if(sIdSel)  aSels.push(sIdSel);
                 } else {
-                    sSel = sSel + "[" + key + '="' + val + '"]';
+                    sSel = sSel + '[' + key + '="' + val + '"]';
                     if(this.distance(sSel, oElement, contentDocument) === 0) {
                         aSels.push(sSel);
                     }
+                }
+            } else {
+                if(this.distance(sSelector, oElement, contentDocument) === 0) {
+                    aSels.push(sSelector);
                 }
             }
         }
@@ -510,6 +546,7 @@ var IdAndTextCentricStrategy = function() {
         let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
         let sSelector = oAttr["nodeName"];
         let dist = 999;
+        let finalSel = sSelector;
         if(aCandAttributes) {
             let sSel = sSelector;
             for (let index = 0; index < aCandAttributes.length; index++) {
@@ -524,14 +561,18 @@ var IdAndTextCentricStrategy = function() {
                             sSel = sSelector;
                         }
                     } else {
-                        sSel = sSel + "[" + key + '="' + val + '"]';
+                        sSel = sSel + '[' + key + '="' + val + '"]';
                         let dSel = this.distance(sSel, oElement, contentDocument);
                         if(dSel === 0) {
                             aSels.push(sIdSel);
                             sSel = sSelector;
+                            continue;
                         }
                         if(dSel < dist) {
                             dist = dSel;
+                            finalSel = sSel;
+                        } else {
+                            sSel = finalSel;
                         }
                     }
                 }
@@ -553,7 +594,7 @@ var IdAndTextCentricStrategy = function() {
             let val = oAttr[key];
             let dist = 999;
             if(key !== "nodeName") {
-                let sSelNew = sSel + "[" + key + '="' + val + '"]';
+                let sSelNew = sSel + '[' + key + '="' + val + '"]';
                 if(key === "id") {
                     let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                     if(sIdSel) {
@@ -564,6 +605,7 @@ var IdAndTextCentricStrategy = function() {
                         if(dSel === 0) {
                             aSels.push(sSelNew);
                             sSel = sSelector;
+                            continue;
                         }
                         if(sSelNew && dSel < dist) {
                             dist = dSel;
@@ -577,6 +619,7 @@ var IdAndTextCentricStrategy = function() {
                     if(dSel === 0) {
                         aSels.push(sSelNew);
                         sSel = sSelector;
+                        continue;
                     }
                     if(sSelNew && dSel < dist) {
                         dist = dSel;
@@ -594,7 +637,7 @@ var IdAndTextCentricStrategy = function() {
         if(aCandAttributes) {
             for (let index = 0; index < aCandAttributes.length; index++) {
                 let oAttr = aCandAttributes[index];
-                if(oAttr.dist) {
+                if(oAttr.dist !== undefined && oAttr.dist !== null) {
                     delete oAttr.dist;
                 }
             }
@@ -712,9 +755,9 @@ var IdAndTextCentricStrategy = function() {
     this.getAllElementSelectors = function(oElement, oContentDocument) {
         aCandAttributes = [];
         let aOwnSelectors = this.getSelectorsEachAtribute(oElement, oContentDocument);
-        if(aOwnSelectors.length < 2) {
+        if(aOwnSelectors.length < 4) {
             aOwnSelectors = this.getSelectorsEachTogetherAtribute(oElement, oContentDocument);
-            if(!aOwnSelectors.length) {
+            if(aOwnSelectors.length < 2) {
                 if(aCandAttributes.length > 0) {
                     aOwnSelectors = this.combiCandAttrs(oElement, oContentDocument);
                     aOwnSelectors = [].concat(aOwnSelectors).concat(this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
@@ -786,7 +829,7 @@ var IdAndTextCentricStrategy = function() {
         if(oElement) {
             mFrameResults = this.generateVyperCodeForCssIframe(aFrames);
             if(aFrames && aFrames.length > 0) {
-                let oContFrame = aFrames[aFrames.length - 1];
+                let oContFrame = aFrames[0];
                 oContentDocument = oContFrame.contentDocument;
             }
             mSelsActionResults = this.getAllElementSelectors(oElement, oContentDocument);
@@ -797,7 +840,7 @@ var IdAndTextCentricStrategy = function() {
                     const sKey = oFramesKeys[index];
                     let sSel = mFrameResults[sKey]["selector"];
                     let sActions = mFrameResults[sKey]["action"];
-                    sCodeFrag = sCodeFrag + "await " + sActions + "(" + sSel + ");";
+                    sCodeFrag = sCodeFrag + "await " + sActions + "('" + sSel + "');";
                 }
             }
             if(!mSelsActionResults) return "No valid selector could be generated";
@@ -807,13 +850,19 @@ var IdAndTextCentricStrategy = function() {
                     const sKey = oSelsKeys[index];
                     let sSel = mSelsActionResults[sKey]["selector"];
                     let sActions = mSelsActionResults[sKey]["action"];
-                    let sCode = sCodeFrag + "await " + sActions + "(" + sSel + ");";
+                    let sCode = sCodeFrag + "await " + sActions + "('" + sSel + "');";
                     mOption[sKey]= sCode;
                 }
             }
         }
         return mOption;
     };
+
+    this.formatStringVals = function() {
+        var a = "[{'column1':'value0','column2':'value1','column3':'value2'}]";
+        var b = a.replace("'", "\"");
+        console.log(b);
+    }
 
     this.buildElementSelectorsStr = function(mSelsActionResults, mFrameResults) {
         var sCode = "";

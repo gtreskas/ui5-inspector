@@ -18,19 +18,48 @@
     var utils = require('../../../modules/utils/utils.js');
     var beautifier = require('../../../../html/lib/beautify.js');
     var deepExtend = require('deep-extend');
-   
+    var vyperButton = document.getElementById("runNonUI5Vyper");
+    var vyperAction = document.getElementById("selectAction");
+    var vyperSumElems = document.getElementById("sumOfElems");
+    var mSelectorOptions = {};
+    var vyperSelectAlts = document.getElementById("selectorAlt");
 /////////////////////////Vyper//////////////////////////////////////////////////////////////
+
+vyperSelectAlts.addEventListener("change", function(){
+    //Get editor instance
+    if(!edt) {
+        var edt = nonUi5VyperEditor;
+        if(!edt) {
+            edtDom = document.querySelector('.CodeMirror');
+            if(edtDom && edtDom.CodeMirror) {
+                edt = edtDom.CodeMirror;
+            }
+        }
+    }
+    if(mSelectorOptions) {
+        let selectedOption = vyperSelectAlts.options[vyperSelectAlts.selectedIndex].text;
+        if( selectedOption && mSelectorOptions[selectedOption] && beautifier) {
+            let jsBeautifyExec = beautifier.js_beautify;
+            let beautifiedJs = jsBeautifyExec(mSelectorOptions[selectedOption]);
+            edt.setOption("value", beautifiedJs);
+        } else {
+            edt.setOption("value", "No valid selector could be generated");
+        }
+    }
+});
+
 
  //////////////////////////////////////////////////////////////////////////////////////   
     // ================================================================================
     // Communication
     // ================================================================================
-    
+
     // Name space for message handler functions.
     var messageHandler = {
 
         'on-vyper-nonui5-data': function(event) {
             let mSourceCodeOptions = event.vyperSourceOptions;
+            mSelectorOptions = mSourceCodeOptions;
             if(!edt) {
                 var edt = nonUi5VyperEditor;
                 if(!edt) {
@@ -47,7 +76,14 @@
                     const sKey = aOptions[index];
                     //Add key and code in option save them globally for switching in an dictionary mSourceCodeOptions = global
                     let sCode = mSourceCodeOptions[sKey];
+                    
+                    // Generate entries
+                    let option = document.createElement("option");
+                    option.text = sKey;
+                    vyperSelectAlts.add(option);
+           
                     if(!sFirstCode) {
+                        vyperSelectAlts.selectedIndex = 0;
                         sFirstCode = sCode;
                     }
                 }
