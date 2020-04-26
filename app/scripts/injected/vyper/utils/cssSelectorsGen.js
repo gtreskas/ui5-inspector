@@ -125,7 +125,7 @@ function testSelector(element, selector, contentDocument) {
         string = attrSelector + string;
       } else {
         var index = getIndexPosition(e);
-        if (index > 1) {
+        if (index >= 1) {
           string = e.tagName + ":nth-child(" + index + ")" + string;
         } else {
           string = e.tagName + string;

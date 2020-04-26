@@ -69,6 +69,10 @@ vyperSelectAlts.addEventListener("change", function(){
                     }
                 }
             }
+            if(vyperSelectAlts) {
+                // Clear options
+                while (vyperSelectAlts.options.length) vyperSelectAlts.remove(0);
+            }
             if(mSourceCodeOptions) {
                 let sFirstCode = "";
                 var aOptions = Object.keys(mSourceCodeOptions);
