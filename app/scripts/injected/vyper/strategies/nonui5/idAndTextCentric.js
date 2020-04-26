@@ -149,7 +149,7 @@ var IdAndTextCentricStrategy = function() {
         framArray.push(frameChain);
         frameChain["parent"] = oframeElement;
         frameChain["children"] = [];
-        if(oframeElement.contentDocument) return null;
+        if(!oframeElement.contentDocument) return null;
         let aElms = oframeElement.contentDocument.querySelectorAll("[data-vyp-finder='1']");
         if(aElms && aElms.length === 1) {
             return {
@@ -505,6 +505,12 @@ var IdAndTextCentricStrategy = function() {
                             aSels.push(sSel);
                         }
                     }
+                } else {
+                    let aRes = this.containsText(sSelector, oElement.textContent, contentDocument);
+                    if(aRes && aRes.length === 1) {
+                        sSel = sSelector + ", text=" + oElement.textContent;
+                        aSels.push(sSel);
+                    }
                 }
             }
         }
@@ -760,8 +766,8 @@ var IdAndTextCentricStrategy = function() {
             if(aOwnSelectors.length < 2) {
                 if(aCandAttributes.length > 0) {
                     aOwnSelectors = this.combiCandAttrs(oElement, oContentDocument);
-                    aOwnSelectors = [].concat(aOwnSelectors).concat(this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
                 }
+                aOwnSelectors = [].concat(aOwnSelectors).concat(this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
             }
         }
         //Use first degree attributes
