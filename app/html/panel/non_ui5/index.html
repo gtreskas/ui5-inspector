@@ -18,10 +18,24 @@
         <table>
             <tr>
                 <td>
-                    Locator Type: Non UI5
+                    Selector Alternatives:
+                    <select id="selectorAlt">
+                    </select>
                     &nbsp;
                     &nbsp;
-                    Action Type: No Action
+                    Action Type:
+                    <select id="selectAction">
+                        <option value="no action" selected>no action</option>
+                        <option value="click">click</option>
+                        <option value="clear">clear</option>
+                        <option value="fill">fill</option>
+                        <option value="clearAndFill">clearAndFill</option>
+                        <option value="clearAndFillAndRetry">clearAndFillAndRetry</option>
+                    </select>
+                    &nbsp;
+                    &nbsp;
+                    <span id="sumOfElems">  
+                    </span>
                 </td> 
             </tr>
             <tr>
@@ -34,6 +48,13 @@
             <tr>
                 <td>
                     <button type="button" id="runNonUI5Vyper" style="width: 40px;height: 20px;">Run</button> 
+                    <span id="busybox">
+                        Loading.....
+                    </span>
+                    <span id="success">
+                    </span>
+                    <span id="failed">
+                    </span>
                 </td> 
             </tr> 
         </table> 

@@ -26,9 +26,17 @@
                     findElement = mResultFrameElem.element;
                 }
                 try {
-                    findElement.removeAttribute("data-vyp-finder");
-                    mVyperOptionCode = idAndTextCentric.buildElementSelectors(findElement, mResultFrameElem.frames);
+                    if(findElement && findElement.element){
+                        findElement = findElement.element
+                    }
+                    if(findElement){
+                        findElement.removeAttribute("data-vyp-finder");
+                        mVyperOptionCode = idAndTextCentric.buildElementSelectors(findElement, mResultFrameElem.frames);
+                    }
                 } catch (error) {
+                    if(findElement && findElement.element) {
+                        findElement = findElement.element;
+                    }
                     if(findElement){
                         findElement.removeAttribute("data-vyp-finder");
                     }
