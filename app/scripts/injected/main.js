@@ -90,7 +90,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     };
 
     function testVyperLocatorAndAction(selector, action, sVal, index) {
-        var res = vyperElemCentricStrategy.testLocator(selector, index);
+        var res = vyperElemCentricStrategy.testLocator(selector, index = 0);
         if(res.oRes && res.oRes.id) {
             res.actionSuccess = reuseAction.doAction(action, res.oRes, sVal);
         } 
