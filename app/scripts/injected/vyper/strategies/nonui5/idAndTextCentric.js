@@ -494,21 +494,21 @@ var IdAndTextCentricStrategy = function() {
                         sSel = sSel + '[' + key + '="' + val + '"]';
                         let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
                         if(aRes && aRes.length === 1) {
-                            sSel = sSel + ", text=" + oElement.textContent;
+                            sSel = sSel + "', '" + oElement.textContent;
                             aSels.push(sSel);
                         }
                     } else {
                         sSel = sSel + '[' + key + '="' + val + '"]';
                         let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
                         if(aRes && aRes.length === 1) {
-                            sSel = sSel + ", text=" + oElement.textContent;
+                            sSel = sSel + "', '" + oElement.textContent;
                             aSels.push(sSel);
                         }
                     }
                 } else {
                     let aRes = this.containsText(sSelector, oElement.textContent, contentDocument);
                     if(aRes && aRes.length === 1) {
-                        sSel = sSelector + ", text=" + oElement.textContent;
+                        sSel = sSelector + "', '" + oElement.textContent;
                         aSels.push(sSel);
                     }
                 }
@@ -652,7 +652,9 @@ var IdAndTextCentricStrategy = function() {
     };
 
     this.mergeUniqueArrays = function(aItems1, aItems2) {
-        if(!aItems1 || !aItems2) return [];
+        if(!aItems1 && !aItems2) return [];
+        if(!aItems1) return aItems2;
+        if(!aItems2) return aItems1;
         return aItems1.concat(aItems2.filter((item) => aItems1.indexOf(item) < 0))
     };
 
@@ -727,7 +729,7 @@ var IdAndTextCentricStrategy = function() {
                 const sSel = aResSelectors[index];
                 let sKey = "alternative css " + (index + 1);
                 mResults[sKey] = { "selector": sSel, "action": ""};
-                if(sSel.indexOf(", text=") !== -1) {
+                if(sSel.indexOf("', '") !== -1) {
                     mResults[sKey]["action"] = "non_ui5.common.locator.getElementByCssContainingText"; 
                 } else {
                     mResults[sKey]["action"] = "non_ui5.common.locator.getElementByCss";
@@ -762,12 +764,12 @@ var IdAndTextCentricStrategy = function() {
         aCandAttributes = [];
         let aOwnSelectors = this.getSelectorsEachAtribute(oElement, oContentDocument);
         if(aOwnSelectors.length < 4) {
-            aOwnSelectors = this.getSelectorsEachTogetherAtribute(oElement, oContentDocument);
+            aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachTogetherAtribute(oElement, oContentDocument));
             if(aOwnSelectors.length < 2) {
                 if(aCandAttributes.length > 0) {
-                    aOwnSelectors = this.combiCandAttrs(oElement, oContentDocument);
+                    aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.combiCandAttrs(oElement, oContentDocument));
                 }
-                aOwnSelectors = [].concat(aOwnSelectors).concat(this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
+                aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
             }
         }
         //Use first degree attributes
@@ -856,7 +858,7 @@ var IdAndTextCentricStrategy = function() {
                     const sKey = oSelsKeys[index];
                     let sSel = mSelsActionResults[sKey]["selector"];
                     let sActions = mSelsActionResults[sKey]["action"];
-                    let sCode = sCodeFrag + "await " + sActions + "('" + sSel + "');";
+                    let sCode = sCodeFrag + "let elem = await " + sActions + "('" + sSel + "');";
                     mOption[sKey]= sCode;
                 }
             }

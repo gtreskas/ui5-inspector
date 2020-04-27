@@ -203,7 +203,7 @@ var xPathSelector = {
             // if (relative == true && currentElement == element.parentNode)
             //   continue;
             let elementXpath = this._findXpath(element, currentElement, basePath, relative)
-            console.log(`find element xpath ${elementXpath}, relative=${relative}`)
+            //console.log(`find element xpath ${elementXpath}, relative=${relative}`)
             // it seems that to find the value xpath automatically is not viable
             // let valueXpaths = this.postfixXpath(element, elementXpath);
             // for (let valueXpath of valueXpaths) {
@@ -248,7 +248,7 @@ var xPathSelector = {
         for (let attr of allAttributes) {
             for (let relative of [true, false]) {
             let xpath = this.findXpathByAttr(element, attr, relative);
-            console.log(`find xpath for ${element.tagName} by ${attr}, relative: ${relative}: ${xpath}`)
+            //console.log(`find xpath for ${element.tagName} by ${attr}, relative: ${relative}: ${xpath}`)
             if (xpath)
                 xpaths.push(xpath)
             }

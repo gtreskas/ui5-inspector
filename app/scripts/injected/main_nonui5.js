@@ -48,6 +48,10 @@
             }
         },
 
+        'do-run-nonui5-vyper': function (oMess) {
+            console.log(oMess);
+        }
+
     };
     /**
      * Register custom event for communication with the injected.
@@ -56,7 +60,8 @@
         var action = event.detail.action;
         if( 
             action === 'on-select-element' || 
-            action === 'on-vyper-nonui5-data'){
+            action === 'on-vyper-nonui5-data' ||
+            action === 'do-run-nonui5-vyper'){
             if (messageHandler[action]) {
                 messageHandler[action](event);
             }
