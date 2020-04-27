@@ -25,7 +25,125 @@
     var vyperSelectAlts = document.getElementById("selectorAlt");
 /////////////////////////Vyper//////////////////////////////////////////////////////////////
 
+var ReuseDictionary = {
+    "no action": "",
+    "click": "non_ui5.common.userInteraction.click",
+    "clear": "non_ui5.common.userInteraction.clear",
+    "clearAndRetry": "non_ui5.common.userInteraction.clearAndRetry",
+    "fill": "non_ui5.common.userInteraction.fill",
+    "fillAndRetry":"non_ui5.common.userInteraction.fillAndRetry",
+    "clearAndFill": "non_ui5.common.userInteraction.clearAndFill",
+    "clearAndFillAndRetry": "non_ui5.common.userInteraction.clearAndFillAndRetry"
+};
+// Attach run vyper event
+vyperButton.addEventListener("click", function(){
+    //Get editor instance
+    if(!edt) {
+        var edt = nonUi5VyperEditor;
+        if(!edt) {
+            edtDom = document.querySelector('.CodeMirror');
+            if(edtDom && edtDom.CodeMirror) {
+                edt = edtDom.CodeMirror;
+            }
+        }
+    }
+    let strVal = edt.getValue();
+    let action = ReuseDictionary[vyperAction.value];
+    if(strVal && mSelectorOptions && vyperAction.value && action !== null && action !== undefined) {
+        let selectedOption = vyperSelectAlts.options[vyperSelectAlts.selectedIndex].text;
+        let strAllCode = mSelectorOptions[selectedOption];
+        let strCode = "";
+        if(strAllCode) {
+            if(strAllCode.indexOf('getElementByCssContainingText') !== -1){
+                strCode = "non_ui5.common.locator.getElementByCssContainingText";
+            } else if(strAllCode.indexOf('getElementByCss') !== -1){
+                strCode = "non_ui5.common.locator.getElementByCss";
+            } else if(strAllCode.indexOf('getElementByXPath') !== -1){
+                strCode = "non_ui5.common.locator.getElementByXPath";
+            } 
+        }
+        let sMethodFram = 'non_ui5.common.locator.switchToIframe';
+        let iframe = "";
+        if(strVal.indexOf(sMethodFram) !== -1) {
+            let cutFrame = strVal.substring(strVal.lastIndexOf(sMethodFram));
+            iframe = cutFrame.substring(cutFrame.lastIndexOf(sMethodFram) + (sMethodFram.length + 1), cutFrame.indexOf(');'));
+        }
+        
+        let sSel = "";
+        let sText = "";
+        if(strCode && strVal.indexOf(strCode) !== -1) {
+            let cutMethod = strVal.substring(strVal.lastIndexOf(strCode));
+            sSel = cutMethod.substring(cutMethod.lastIndexOf(strCode) + (strCode.length + 1), cutMethod.indexOf(');'));
+            if(cutMethod.indexOf('getElementByCssContainingText') !== -1) {
+                let aSel = sSel.split(',');
+                if(aSel && aSel.length > 1){
+                    sSel = aSel[0];
+                    sText = aSel[1];
+                }
+            }
+        }
+        
+        let sValEnter = "";
+        if(action && strVal.indexOf(action) !== -1) {
+            let cutAction = strVal.substring(strVal.lastIndexOf(action));
+            let cutVal = cutAction.substring(cutAction.lastIndexOf(action) + (action.length + 1), cutAction.indexOf(');'));
+            let aValEnter = cutVal.split(',');
+            if(aValEnter && aValEnter.length > 1){
+                sValEnter = aValEnter[1];
+            }
+        }
+
+        // Get value of editor
+        let failedDom = document.getElementById("failed");
+        failedDom.innerText =  "Failed! Parsing issue with selector";
+        failedDom.style.display = "block";
+        let successDom = document.getElementById("success");
+        successDom.style.display = "none";
+        
+        //Send message
+        port.postMessage({
+            action: 'do-run-nonui5-vyper',
+            iframe: iframe,
+            selector: {"method": strCode, "value": sSel, "text": sText},
+            vyperAction: {"method": action, "entValue": sValEnter.trim()}
+        });
+    }
+});
+
+vyperAction.addEventListener("change", function(){
+      //Get editor instance
+      if(!edt) {
+        var edt = nonUi5VyperEditor;
+        if(!edt) {
+            edtDom = document.querySelector('.CodeMirror');
+            if(edtDom && edtDom.CodeMirror) {
+                edt = edtDom.CodeMirror;
+            }
+        }
+    }
+    if(mSelectorOptions) {
+        let selectedOption = vyperSelectAlts.options[vyperSelectAlts.selectedIndex].text;
+        let strCode = mSelectorOptions[selectedOption];
+        if(vyperAction.value !== "no action"){
+            if(vyperAction.value.indexOf('clearAndFillAndRetry') !== -1 ||
+                vyperAction.value.indexOf('clearAndFill') !== -1 ||
+                vyperAction.value.indexOf('fillAndRetry') !== -1 ||
+                vyperAction.value.indexOf('fill') !== -1) {
+                strCode = strCode + "await " + ReuseDictionary[vyperAction.value] + "(elem, 'testValue');";        
+            } else {
+                strCode = strCode + "await " + ReuseDictionary[vyperAction.value] + "(elem);";
+            }
+        }
+        if(strCode && beautifier) {
+            let jsBeautifyExec = beautifier.js_beautify;
+            let beautifiedJs = jsBeautifyExec(strCode);
+            edt.setOption("value", beautifiedJs);
+        }
+    }
+});
+
 vyperSelectAlts.addEventListener("change", function(){
+    vyperAction.value = "no action";
     //Get editor instance
     if(!edt) {
         var edt = nonUi5VyperEditor;
@@ -59,6 +177,7 @@ vyperSelectAlts.addEventListener("change", function(){
 
         'on-vyper-nonui5-data': function(event) {
             let mSourceCodeOptions = event.vyperSourceOptions;
+            vyperAction.value = "no action";
             mSelectorOptions = mSourceCodeOptions;
             if(!edt) {
                 var edt = nonUi5VyperEditor;
