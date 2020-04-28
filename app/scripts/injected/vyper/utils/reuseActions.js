@@ -13,18 +13,18 @@ var ReuseDictionary = {
 var ReuseActions = function(){
     this.doNonUI5Action = function(sAction, oElm, sVal) {
         if(sAction && oElm) {
-            if(sAction === "no action"){
+            if(sAction === ""){
                 return true;
-            } else if(sAction === "click") {
-                return this.clickNonUI5(oElm);
-            } else if(sAction === "clear" || sAction === "clearAndRetry") {
-                return this.setValueNonUI5(oElm, "");
-            } else if(sVal && sAction === "fill" || sAction === "fillAndRetry") {
-                return this.setValueNonUI5(oElm, sVal);
-            } else if(sVal && sAction === "clearAndFill" || sAction === "clearAndFillAndRetry") {
+            } else if(sVal && sAction.indexOf("clearAndFill")!== -1 || sAction.indexOf("clearAndFillAndRetry")!== -1) {
                 this.setValueNonUI5(oElm, "");
                 return this.setValueNonUI5(oElm, sVal);
-            }
+            } else if(sVal && sAction.indexOf("fill")!== -1 || sAction.indexOf("fillAndRetry")!== -1) {
+                return this.setValueNonUI5(oElm, sVal);
+            } else if(sAction.indexOf("clear")!== -1 || sAction.indexOf("clearAndRetry")!== -1) {
+                return this.setValueNonUI5(oElm, "");
+            } else if(sAction.indexOf("click")!== -1) {
+                return this.clickNonUI5(oElm);
+            } 
         }
         return false;
     },
