@@ -92,13 +92,6 @@ vyperButton.addEventListener("click", function(){
                 sValEnter = aValEnter[1];
             }
         }
-
-        // Get value of editor
-        let failedDom = document.getElementById("failed");
-        failedDom.innerText =  "Failed! Parsing issue with selector";
-        failedDom.style.display = "block";
-        let successDom = document.getElementById("success");
-        successDom.style.display = "none";
         
         //Send message
         port.postMessage({
@@ -176,6 +169,11 @@ vyperSelectAlts.addEventListener("change", function(){
     var messageHandler = {
 
         'on-vyper-nonui5-data': function(event) {
+            let successDom = document.getElementById("success");
+            let failedDom = document.getElementById("failed");
+            successDom.style.display = "none";
+            failedDom.style.display = "none";
+            vyperSumElems.innerText = "";
             let mSourceCodeOptions = event.vyperSourceOptions;
             vyperAction.value = "no action";
             mSelectorOptions = mSourceCodeOptions;
@@ -218,6 +216,35 @@ vyperSelectAlts.addEventListener("change", function(){
                     edt.setOption("value", "No valid selector could be generated");
                 }
             }
+        },
+
+        'on-nonui5-vyper-progress': function(event) {
+            let successDom = document.getElementById("success");
+            let failedDom = document.getElementById("failed");
+            successDom.style.display = "none";
+            failedDom.style.display = "none";
+            if(event) {
+                vyperSumElems.innerText = "";
+                if(event.count !== null && event.count !== undefined) {
+                    vyperSumElems.innerText = "Total number of elements found:" + event.count;
+                } 
+                if(event.success) {
+                    successDom.innerText = "Success!";
+                    successDom.style.display = "block";
+                    failedDom.style.display = "none";
+                } else {
+                    if(event.count > 1 || event.count === 0) {
+                        failedDom.innerText =  "Failed!";
+                        successDom.style.display = "none";
+                        failedDom.style.display = "block";
+                    } else {
+                        failedDom.innerText =  "Action failed!";
+                        successDom.style.display = "none";
+                        failedDom.style.display = "block";
+                    }
+                }
+            }
+            
         },
 
         /**

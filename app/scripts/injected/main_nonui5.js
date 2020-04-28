@@ -3,6 +3,7 @@
     var ui5inspector = require('../modules/injected/ui5inspector.js');
     var message = require('../modules/injected/message.js');
     var idAndTextCentric = require('./vyper/strategies/nonui5/idAndTextCentric');
+    var reuseAction = require('./vyper/utils/reuseActions');
     // Create global reference for the extension.
     ui5inspector.createReferences();
     // Name space for message handler functions.
@@ -49,9 +50,99 @@
         },
 
         'do-run-nonui5-vyper': function (oMess) {
-            console.log(oMess);
-        }
+            if(oMess && oMess.detail) {
+                let oContDocument = document; 
+                let bActionSuccess = false;
+                let oElement = null;
+                let count = 0;
+                if(oMess.detail.iframe) {
+                    let valFrame = "";
+                        if(oMess.detail.iframe.length > 1 && 
+                            oMess.detail.iframe.substring(0, 0) === oMess.detail.iframe.substring(1, 1)) {
+                            valFrame = oMess.detail.iframe.substring(1, oMess.detail.iframe.length - 1)
+                        } else {
+                            valFrame = oMess.detail.iframe;
+                        }
 
+                    let oFrame = document.querySelector(valFrame);
+                    if(oFrame && oFrame.contentDocument) {
+                        oContDocument = oFrame.contentDocument;
+                    }
+                }
+                if(oMess.detail.selector && oContDocument) {
+                    if(!oMess.detail.selector.method || !oMess.detail.selector.value) {
+                        oElement = null;
+                    } else {
+                        let val = "";
+                        if(oMess.detail.selector.value.length > 1 && 
+                            oMess.detail.selector.value.substring(0, 0) === oMess.detail.selector.value.substring(1, 1)) {
+                                val = oMess.detail.selector.value.substring(1, oMess.detail.selector.value.length - 1)
+                        } else {
+                            val = oMess.detail.selector.value;
+                        }
+
+                        if(oMess.detail.selector.method === "non_ui5.common.locator.getElementByCssContainingText") {
+                            let aRes =  idAndTextCentric.containsText(
+                                val, 
+                                oMess.detail.selector.text, 
+                                oContDocument);
+                            if(aRes && aRes.length === 1) {
+                                oElement = aRes[0];
+                            }
+                            count = aRes.length;
+                        } else if(oMess.detail.selector.method === "non_ui5.common.locator.getElementByCss") {
+                            let aSelector = oContDocument.querySelectorAll(val);
+                            if(aSelector && aSelector.length === 1) {
+                                oElement = aSelector[0];
+                            }
+                            count = aSelector.length;
+                        } else if(oMess.detail.selector.method === "non_ui5.common.locator.getElementByXPath") {
+                            let xPathRes = contentDocument.evaluate(
+                                val, 
+                                oContDocument, 
+                                null, 
+                                XPathResult.ORDERED_NODE_ITERATOR_TYPE,
+                                null
+                            );
+                            let oElem = xPathRes.iterateNext();
+                            if(oElem) {
+                                Object.assign(oElement, oElem);
+                                while (oElem) {
+                                    oElem = iterator.iterateNext();
+                                    count++;
+                                } 
+                                if(count > 1){
+                                    oElement = null;
+                                }
+                            } 
+                        }   
+                    }
+                }
+
+                if(oElement && oMess.detail.vyperAction.method) {
+                    let val = "";
+                    if(oMess.detail.vyperAction.entValue.length > 1 && 
+                        oMess.detail.vyperAction.entValue.substring(0, 0) === oMess.detail.vyperAction.entValue.substring(1, 1)) {
+                        val = oMess.detail.vyperAction.entValue.substring(1, oMess.detail.vyperAction.entValue.length - 1)
+                    } else {
+                        val = oMess.detail.vyperAction.entValue;
+                    }
+                    bActionSuccess = reuseAction.doNonUI5Action(
+                        oMess.detail.vyperAction.method, 
+                        oElement, 
+                        val
+                    );        
+                } else if(oElement){
+                    bActionSuccess = true;
+                }
+
+                message.sendNonUI5({
+                    action: 'on-nonui5-vyper-progress',
+                    success: bActionSuccess,
+                    count: count,
+                });
+            }
+        }
     };
     /**
      * Register custom event for communication with the injected.
@@ -61,7 +152,8 @@
         if( 
             action === 'on-select-element' || 
             action === 'on-vyper-nonui5-data' ||
-            action === 'do-run-nonui5-vyper'){
+            action === 'do-run-nonui5-vyper' ||
+            action === 'on-nonui5-vyper-progress'){
             if (messageHandler[action]) {
                 messageHandler[action](event);
             }
