@@ -23,19 +23,23 @@ function _showHighLighter() {
  * Create DOM element for visual highlighting.
  * @private
  */
-function _createHighLighter() {
-    var highLighter = document.createElement('div');
+function _createHighLighter(oDocument) {
+    if(!oDocument) {
+        oDocument = document;
+    }
+
+    var highLighter = oDocument.createElement('div');
     highLighter.style.cssText = 'box-sizing: border-box;border:1px solid blue;background: rgba(20, 20, 200, 0.4);position: absolute';
 
-    var highLighterWrapper = document.createElement('div');
+    var highLighterWrapper = oDocument.createElement('div');
     highLighterWrapper.id = 'ui5-highlighter';
     highLighterWrapper.style.cssText = 'position: fixed;top:0;right:0;bottom:0;left:0;z-index: 1000;overflow: hidden;';
     highLighterWrapper.appendChild(highLighter);
 
-    document.body.appendChild(highLighterWrapper);
+    oDocument.body.appendChild(highLighterWrapper);
 
     // Save reference for later usage
-    _highLighter = document.getElementById('ui5-highlighter');
+    _highLighter = oDocument.getElementById('ui5-highlighter');
 
     // Add event handler
     _highLighter.onmouseover = _hideHighLighter;
@@ -73,7 +77,27 @@ module.exports = {
             highlighter.style.height = targetRect.height + 'px';
             highlighter.style.width = targetRect.width + 'px';
         }
+        return this;
+    },
 
+    setDimensionsNonUI5: function (targetDomElement, oDocument) {
+        var highlighter;
+        var targetRect;
+
+        if (_highLighter === null || !oDocument.getElementById('ui5-highlighter')) {
+            _createHighLighter(oDocument);
+        } else {
+            _showHighLighter();
+        }
+        highlighter = _highLighter.firstElementChild;
+        if (targetDomElement) {
+            targetRect = targetDomElement.getBoundingClientRect();
+
+            highlighter.style.top = targetRect.top + 'px';
+            highlighter.style.left = targetRect.left + 'px';
+            highlighter.style.height = targetRect.height + 'px';
+            highlighter.style.width = targetRect.width + 'px';
+        }
         return this;
     }
 };

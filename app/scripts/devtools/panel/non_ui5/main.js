@@ -1,6 +1,23 @@
 (function () {
     'use strict';
 
+    var getIndicesOf = function(searchStr, str, caseSensitive) {
+        var searchStrLen = searchStr.length;
+        if (searchStrLen == 0) {
+            return [];
+        }
+        var startIndex = 0, index, indices = [];
+        if (!caseSensitive) {
+            str = str.toLowerCase();
+            searchStr = searchStr.toLowerCase();
+        }
+        while ((index = str.indexOf(searchStr, startIndex)) > -1) {
+            indices.push(index);
+            startIndex = index + searchStrLen;
+        }
+        return indices;
+    }
+
     // Create a port with background page for continuous message communication
     // ================================================================================
     var port = chrome.extension.connect({name: 'devtools-nonui5-tabId-' + chrome.devtools.inspectedWindow.tabId});
@@ -63,10 +80,19 @@ vyperButton.addEventListener("click", function(){
             } 
         }
         let sMethodFram = 'non_ui5.common.locator.switchToIframe';
-        let iframe = "";
-        if(strVal.indexOf(sMethodFram) !== -1) {
-            let cutFrame = strVal.substring(strVal.lastIndexOf(sMethodFram));
-            iframe = cutFrame.substring(cutFrame.lastIndexOf(sMethodFram) + (sMethodFram.length + 1), cutFrame.indexOf(');'));
+        let aIframes = [];
+        let aIndices = getIndicesOf(sMethodFram, strVal, false);
+        if(aIndices && aIndices.length > 0) {
+            for (let index = 0; index < aIndices.length; index++) {
+                let idx = aIndices[index];
+                if(strVal.indexOf(sMethodFram) !== -1) {
+                    let cutFrame = strVal.substring(idx);
+                    let iframe = cutFrame.substring(sMethodFram.length + 1, cutFrame.indexOf(');'));
+                    if(iframe) {
+                        aIframes.push(iframe);
+                    }
+                }   
+            }
         }
         
         let sSel = "";
@@ -77,8 +103,8 @@ vyperButton.addEventListener("click", function(){
             if(cutMethod.indexOf('getElementByCssContainingText') !== -1) {
                 let aSel = sSel.split(',');
                 if(aSel && aSel.length > 1){
-                    sSel = aSel[0];
-                    sText = aSel[1];
+                    sSel = aSel[0].trim();
+                    sText = aSel[1].trim();
                 }
             }
         }
@@ -96,7 +122,7 @@ vyperButton.addEventListener("click", function(){
         //Send message
         port.postMessage({
             action: 'do-run-nonui5-vyper',
-            iframe: iframe,
+            iframes: aIframes,
             selector: {"method": strCode, "value": sSel, "text": sText},
             vyperAction: {"method": action, "entValue": sValEnter.trim()}
         });

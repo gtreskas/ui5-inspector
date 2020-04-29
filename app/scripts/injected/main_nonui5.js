@@ -2,6 +2,7 @@
     'use strict';
     var ui5inspector = require('../modules/injected/ui5inspector.js');
     var message = require('../modules/injected/message.js');
+    var highLighter = require('../modules/content/highLighter.js');
     var idAndTextCentric = require('./vyper/strategies/nonui5/idAndTextCentric');
     var reuseAction = require('./vyper/utils/reuseActions');
     // Create global reference for the extension.
@@ -55,18 +56,18 @@
                 let bActionSuccess = false;
                 let oElement = null;
                 let count = 0;
-                if(oMess.detail.iframe) {
-                    let valFrame = "";
-                        if(oMess.detail.iframe.length > 1 && 
-                            oMess.detail.iframe.substring(0, 0) === oMess.detail.iframe.substring(1, 1)) {
-                            valFrame = oMess.detail.iframe.substring(1, oMess.detail.iframe.length - 1)
-                        } else {
-                            valFrame = oMess.detail.iframe;
+                if(oMess.detail.iframes && oMess.detail.iframes.length > 0) {
+                    for (let index = 0; index < oMess.detail.iframes.length; index++) {
+                        let valFrame = oMess.detail.iframes[index];
+                        
+                        if(valFrame.length > 1 && 
+                            valFrame.substring(0, 0) === valFrame.substring(1, 1)) {
+                            valFrame = valFrame.substring(1, valFrame.length - 1)
+                        } 
+                        let oFrame = oContDocument.querySelector(valFrame);
+                        if(oFrame && oFrame.contentDocument) {
+                            oContDocument = oFrame.contentDocument;
                         }
-
-                    let oFrame = document.querySelector(valFrame);
-                    if(oFrame && oFrame.contentDocument) {
-                        oContDocument = oFrame.contentDocument;
                     }
                 }
                 if(oMess.detail.selector && oContDocument) {
@@ -82,10 +83,19 @@
                         }
 
                         if(oMess.detail.selector.method === "non_ui5.common.locator.getElementByCssContainingText") {
-                            let aRes =  idAndTextCentric.containsText(
+                            let sText = "";
+                            if(oMess.detail.selector.text && oMess.detail.selector.text.length > 1 && 
+                                oMess.detail.selector.text.substring(0, 0) === oMess.detail.selector.text.substring(1, 1)) {
+                                    sText = oMess.detail.selector.text.substring(1, oMess.detail.selector.text.length - 1)
+                            } else {
+                                sText = oMess.detail.selector.text;
+                            }
+
+                            let aRes = idAndTextCentric.containsText(
                                 val, 
-                                oMess.detail.selector.text, 
+                                sText, 
                                 oContDocument);
+
                             if(aRes && aRes.length === 1) {
                                 oElement = aRes[0];
                             }
@@ -97,7 +107,7 @@
                             }
                             count = aSelector.length;
                         } else if(oMess.detail.selector.method === "non_ui5.common.locator.getElementByXPath") {
-                            let xPathRes = contentDocument.evaluate(
+                            let xPathRes = oContDocument.evaluate(
                                 val, 
                                 oContDocument, 
                                 null, 
@@ -134,6 +144,12 @@
                     );        
                 } else if(oElement){
                     bActionSuccess = true;
+                }
+
+                //Highlight element if succeeded
+                if(bActionSuccess && oElement && oContDocument) {
+                    // Weird effects being in iframe... never get hiden and freezes the ui
+                    //highLighter.setDimensionsNonUI5(oElement, oContDocument);
                 }
 
                 message.sendNonUI5({
