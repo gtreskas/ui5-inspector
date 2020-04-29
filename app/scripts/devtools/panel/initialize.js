@@ -57,7 +57,7 @@ chrome.devtools.panels.elements.createSidebarPane(
     "Vyper Non-UI5 Spotlight",
     function(sidebar) {
         sideBarNonUI5 = sidebar;
-        sidebar.setHeight('100px');
+        sidebar.setHeight('200px');
         sidebar.setPage('/html/panel/non_ui5/index.html');
         chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
             var getElementForVyper = _getElementForVyper.toString() + '_getElementForVyper($0);';
