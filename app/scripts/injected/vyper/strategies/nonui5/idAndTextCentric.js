@@ -123,6 +123,7 @@ var cssSelectors = require('../../utils/cssSelectorsGen');
 var xPathSelectors = require('../../utils/xPathGenerator');
 var IdAndTextCentricStrategy = function() {
     var framArray = [];
+    var aBlackListed = [];
     this.getIframe = function(oElement, oframeElement) {
         let aElms = oframeElement.contentDocument.querySelectorAll("[data-vyp-finder='1']");
         if(aElms && aElms.length === 1 && oElement.isSameNode(aElms[0])) {
@@ -486,6 +487,10 @@ var IdAndTextCentricStrategy = function() {
                 const oAttr = aAttrs[index];
                 let key = Object.keys(oAttr)[0];
                 let val = oAttr[key];
+                if(val.indexOf('};') !== -1 || val.indexOf('}') !== -1
+                || val.indexOf('{') !== -1 || val.indexOf(');') !== -1) {
+                    continue;
+                }
                 if(key !== "nodeName") {
                     let sSel = sSelector;
                     if(key === "id") {
@@ -516,7 +521,7 @@ var IdAndTextCentricStrategy = function() {
         }
         return aSels;
     };
-
+    
     this.getSelectorsEachAtribute = function(oElement, contentDocument) {
         let aSels = [];
         let aAttrs = this.retrieveDomProperties(oElement);
@@ -526,6 +531,11 @@ var IdAndTextCentricStrategy = function() {
             const oAttr = aAttrs[index];
             let key = Object.keys(oAttr)[0];
             let val = oAttr[key];
+            if(val.indexOf('};') !== -1 || val.indexOf('}') !== -1
+            || val.indexOf('{') !== -1 || val.indexOf(');') !== -1) {
+                aBlackListed.push(key);
+                continue;
+            }
             if(key !== "nodeName") {
                 let sSel = sSelector;
                 if(key === "id") {
@@ -559,6 +569,10 @@ var IdAndTextCentricStrategy = function() {
                 const oAttr = aCandAttributes[index];
                 let key = Object.keys(oAttr)[0];
                 let val = oAttr[key];
+                if(val.indexOf('};') !== -1 || val.indexOf('}') !== -1
+                || val.indexOf('{') !== -1 || val.indexOf(');') !== -1) {
+                    continue;
+                }
                 if(key !== "nodeName") {
                     if(key === "id") {
                         let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
@@ -598,6 +612,10 @@ var IdAndTextCentricStrategy = function() {
             const oAttr = aAttrs[index];
             let key = Object.keys(oAttr)[0];
             let val = oAttr[key];
+            if(val.indexOf('};') !== -1 || val.indexOf('}') !== -1
+            || val.indexOf('{') !== -1 || val.indexOf(');') !== -1) {
+                continue;
+            }
             let dist = 999;
             if(key !== "nodeName") {
                 let sSelNew = sSel + '[' + key + '="' + val + '"]';
@@ -686,9 +704,10 @@ var IdAndTextCentricStrategy = function() {
         aSelectorsAttrOwnAll,
         aSelectorsAttrOwnAllNoIdLike, contentDocument){
             let allSelectors = [];
+            let aValidOwnSelectorsAttrFirst = this.validateSelectors(oElement, aOwnSelectors, contentDocument);
             let aValidSelectorsAttrFirst = this.validateSelectors(oElement, aSelectorsAttrFirst, contentDocument);
-            if(aOwnSelectors) {
-                allSelectors = this.mergeUniqueArrays(aOwnSelectors, aValidSelectorsAttrFirst);
+            if(aValidOwnSelectorsAttrFirst) {
+                allSelectors = this.mergeUniqueArrays(aValidOwnSelectorsAttrFirst, aValidSelectorsAttrFirst);
             } else {
                 allSelectors = [].concat(aValidSelectorsAttrFirst);
             }
@@ -761,17 +780,26 @@ var IdAndTextCentricStrategy = function() {
     }
 
     this.getAllElementSelectors = function(oElement, oContentDocument) {
+        aBlackListed = [];    
         aCandAttributes = [];
         let aOwnSelectors = this.getSelectorsEachAtribute(oElement, oContentDocument);
-        if(aOwnSelectors.length < 4) {
+        if(aOwnSelectors.length < 6) {
             aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachTogetherAtribute(oElement, oContentDocument));
-            if(aOwnSelectors.length < 2) {
+            if(aOwnSelectors.length < 3) {
                 if(aCandAttributes.length > 0) {
                     aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.combiCandAttrs(oElement, oContentDocument));
                 }
-                aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
             }
+            aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
         }
+        //Clear blacklisted attributes
+        firstDegreeAttributes = firstDegreeAttributes.filter(function(value){ 
+            return !aBlackListed.includes(value);
+        });
+        //Second blacklisted attributes
+        secondDegreeAttributes = secondDegreeAttributes.filter(function(value){ 
+            return !aBlackListed.includes(value);
+        });
         //Use first degree attributes
         let aSelectorsAttrFirst = cssSelectors.getSelectors(oElement, oContentDocument, firstDegreeAttributes);
         //Use first degree + second degree
@@ -788,10 +816,18 @@ var IdAndTextCentricStrategy = function() {
         // Use all attributes given by element
         let aAttrs = this.retrieveDomProperties(oElement);
         let aAttrsName = this.getAllDomPropertyKeys(aAttrs) || [];
+        //Clear blacklisted attributes
+        aAttrsName = aAttrsName.filter(function(value){ 
+            return !aBlackListed.includes(value);
+        });
         let aSelectorsAttrOwnAll = cssSelectors.getSelectors(oElement,oContentDocument, aAttrsName);
         // Use all attributes except id like fields.
         aAttrs = this.retrieveDomProperties(oElement);
         aAttrsName = this.getAllDomPropertyKeys(aAttrs) || [];
+        //Clear blacklisted attributes
+        aAttrsName = aAttrsName.filter(function(value){ 
+            return !aBlackListed.includes(value);
+        });
         aFilteredWithoutId = aAttrsName.filter(function(value){ 
             return value !== "aria-labelledby" && 
             value !== "id" &&
