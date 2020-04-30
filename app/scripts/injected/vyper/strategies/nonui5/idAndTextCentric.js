@@ -697,7 +697,8 @@ var IdAndTextCentricStrategy = function() {
 
     this.mergeResultsIntoOneArray= function(
         oElement, 
-        aOwnSelectors, 
+        aOwnSelectors,
+        aOwnSelectorsWithText,
         aSelectorsAttrFirst,
         aSelectorsAttrFirstSec,
         aSelectorsAttrFirstSecNoId,
@@ -710,6 +711,11 @@ var IdAndTextCentricStrategy = function() {
                 allSelectors = this.mergeUniqueArrays(aValidOwnSelectorsAttrFirst, aValidSelectorsAttrFirst);
             } else {
                 allSelectors = [].concat(aValidSelectorsAttrFirst);
+            }
+
+            //Text already validated dont repeat yourself
+            if(aOwnSelectorsWithText) {
+                allSelectors = this.mergeUniqueArrays(allSelectors, aOwnSelectorsWithText);
             }
 
             let aValidSelectorsAttrFirstSec = this.validateSelectors(oElement, aSelectorsAttrFirstSec, contentDocument);
@@ -783,6 +789,7 @@ var IdAndTextCentricStrategy = function() {
         aBlackListed = [];    
         aCandAttributes = [];
         let aOwnSelectors = this.getSelectorsEachAtribute(oElement, oContentDocument);
+        let aOwnSelectorsWithText = [];
         if(aOwnSelectors.length < 6) {
             aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachTogetherAtribute(oElement, oContentDocument));
             if(aOwnSelectors.length < 3) {
@@ -790,7 +797,7 @@ var IdAndTextCentricStrategy = function() {
                     aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.combiCandAttrs(oElement, oContentDocument));
                 }
             }
-            aOwnSelectors = this.mergeUniqueArrays(aOwnSelectors, this.getSelectorsEachAtributeWithText(oElement, oContentDocument));
+            aOwnSelectorsWithText = this.getSelectorsEachAtributeWithText(oElement, oContentDocument);
         }
         //Clear blacklisted attributes
         firstDegreeAttributes = firstDegreeAttributes.filter(function(value){ 
@@ -839,7 +846,8 @@ var IdAndTextCentricStrategy = function() {
         // Merge all results
         let mergedResults = this.mergeResultsIntoOneArray(
             oElement,
-            aOwnSelectors, 
+            aOwnSelectors,
+            aOwnSelectorsWithText, 
             aSelectorsAttrFirst,
             aSelectorsAttrFirstSec,
             aSelectorsAttrFirstSecNoId,
