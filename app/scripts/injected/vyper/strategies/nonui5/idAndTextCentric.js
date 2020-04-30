@@ -497,24 +497,30 @@ var IdAndTextCentricStrategy = function() {
                         let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                         if(sIdSel) aSels.push(sIdSel);
                         sSel = sSel + '[' + key + '="' + val + '"]';
-                        let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
-                        if(aRes && aRes.length === 1) {
-                            sSel = sSel + "', '" + oElement.textContent;
-                            aSels.push(sSel);
+                        if(oElement.textContent !== null && oElement.textContent !== undefined) {
+                            let aRes = this.containsText(sSel, oElement.textContent.trim(), contentDocument);
+                            if(aRes && aRes.length === 1) {
+                                sSel = sSel + "', '" + oElement.textContent.trim();
+                                aSels.push(sSel);
+                            }
                         }
                     } else {
                         sSel = sSel + '[' + key + '="' + val + '"]';
-                        let aRes = this.containsText(sSel, oElement.textContent, contentDocument);
-                        if(aRes && aRes.length === 1) {
-                            sSel = sSel + "', '" + oElement.textContent;
-                            aSels.push(sSel);
+                        if(oElement.textContent !== null && oElement.textContent !== undefined) {
+                            let aRes = this.containsText(sSel, oElement.textContent.trim(), contentDocument);
+                            if(aRes && aRes.length === 1) {
+                                sSel = sSel + "', '" + oElement.textContent.trim();
+                                aSels.push(sSel);
+                            }
                         }
                     }
                 } else {
-                    let aRes = this.containsText(sSelector, oElement.textContent, contentDocument);
-                    if(aRes && aRes.length === 1) {
-                        sSel = sSelector + "', '" + oElement.textContent;
-                        aSels.push(sSel);
+                    if(oElement.textContent !== null && oElement.textContent !== undefined) {
+                        let aRes = this.containsText(sSelector, oElement.textContent.trim(), contentDocument);
+                        if(aRes && aRes.length === 1) {
+                            sSel = sSelector + "', '" + oElement.textContent.trim();
+                            aSels.push(sSel);
+                        }
                     }
                 }
             }
