@@ -116,10 +116,16 @@
                             );
                             let oElem = xPathRes.iterateNext();
                             if(oElem) {
-                                Object.assign(oElement, oElem);
-                                while (oElem) {
-                                    oElem = iterator.iterateNext();
+                                count++;
+                                oElement = oElem;
+                                let oElemNext = {};
+                                oElemNext =  xPathRes.iterateNext();
+                                if(oElemNext) {
                                     count++;
+                                    while (oElemNext) {
+                                        oElemNext = iterator.iterateNext();
+                                        count++;
+                                    }
                                 } 
                                 if(count > 1){
                                     oElement = null;
