@@ -26,9 +26,9 @@ function testSelector(element, selector, contentDocument) {
       // cutout any query string params from the link and create a "contains" selector
       if(link.match('\\?')) {
         var parts = link.split('?', 1);
-        return element.tagName + "[href*=\"" + parts[0] + "\"]"
+        return element.tagName + "[href*='" + parts[0] + "']"
       } else {
-        return element.tagName + "[href=\"" + link + "\"]";
+        return element.tagName + "[href='" + link + "']";
       }
     }
   
@@ -47,7 +47,7 @@ function testSelector(element, selector, contentDocument) {
       // return it
       if(attr) {
         var clean = attr.replace(new RegExp("'", 'g'), "\\\'");
-        selector = element.tagName + "[" + attributes[i] + "=\"" + clean + "\"]";
+        selector = element.tagName + "[" + attributes[i] + "='" + clean + "']";
         break;
       }
     }
@@ -67,7 +67,7 @@ function testSelector(element, selector, contentDocument) {
       // if the attribute is found create a selector for it
       if(attr) {
         var clean = attr.replace(new RegExp("'", 'g'), "\\\'");
-        var s = element.tagName + "[" + attributes[i] + "=\"" + clean + "\"]";
+        var s = element.tagName + "[" + attributes[i] + "='" + clean + "']";
       }
   
       // if there's a selector and it's unique then break the loop and return it
@@ -126,7 +126,7 @@ function testSelector(element, selector, contentDocument) {
       } else {
         var index = getIndexPosition(e);
         if (index >= 1) {
-          string = e.tagName + ":nth-child(" + index + ")" + string;
+          string = e.tagName + ':nth-child(' + index + ')' + string;
         } else {
           string = e.tagName + string;
         }
@@ -144,11 +144,11 @@ function testSelector(element, selector, contentDocument) {
         string = " > " + string;
         e = e.parentElement;
       } else if (e.parentElement && e.parentElement.tagName === "BODY") {
-        string = "BODY > " + string;
+        string = 'BODY > ' + string;
         e = null;
         break;
       } else if (e.parentElement && e.parentElement.tagName === "HTML") {
-        string = "HTML > " + string;
+        string = 'HTML > ' + string;
         e = null;
         break;
       } else {
@@ -165,16 +165,16 @@ function testSelector(element, selector, contentDocument) {
     var selectors = [];
     var item = element;
     var attributes = [
-      "name",
-      "id",
-      "type",
-      "action",
-      "for",
-      "src",
-      "alt",
-      "data-tl-id",
-      "data-id",
-      "aria-label"
+      'name',
+      'id',
+      'type',
+      'action',
+      'for',
+      'src',
+      'alt',
+      'data-tl-id',
+      'data-id',
+      'aria-label'
     ];
   
     if (customAttributes && Array.isArray(customAttributes)) {
@@ -189,7 +189,7 @@ function testSelector(element, selector, contentDocument) {
     var attrSelector = getUniqueAttributeSelector(item, attributes, contentDocument);
     var cssSelector1 = getCssSelector(item, attributes, contentDocument);
     var cssSelector2 = getCssSelector(item, [], contentDocument);
-    var cssSelector3 = getCssSelector(item, ["id", "name"], contentDocument);
+    var cssSelector3 = getCssSelector(item, ['id', 'name'], contentDocument);
   
     if(anchorSelector) {
       selectors.push(anchorSelector);

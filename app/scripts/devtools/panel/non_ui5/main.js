@@ -148,9 +148,9 @@ vyperAction.addEventListener("change", function(){
                 vyperAction.value.indexOf('clearAndFill') !== -1 ||
                 vyperAction.value.indexOf('fillAndRetry') !== -1 ||
                 vyperAction.value.indexOf('fill') !== -1) {
-                strCode = strCode + "await " + ReuseDictionary[vyperAction.value] + "(elem, 'testValue');";        
+                strCode = strCode + 'await ' + ReuseDictionary[vyperAction.value] + '(elem, "testValue");';        
             } else {
-                strCode = strCode + "await " + ReuseDictionary[vyperAction.value] + "(elem);";
+                strCode = strCode + 'await ' + ReuseDictionary[vyperAction.value] + '(elem);';
             }
         }
         if(strCode && beautifier) {
