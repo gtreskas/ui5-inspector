@@ -100,6 +100,9 @@
         endContainerTitle: 'Model Information'
     });
 
+    // Dataview for control aggregations
+    var controlAggregations = new DataView('control-aggregations');
+
     // Dataview for control binding information - left part
     var controlBindingInfoLeftDataView = new DataView('control-bindings-left', {
 
@@ -127,6 +130,21 @@
 
     // Dataview for control binding information
     var controlBindingInfoRightDataView = new DataView('control-bindings-right');
+
+    // Dataview for control events
+    var controlEvents = new DataView('control-events', {
+
+        /**
+         * Method fired when a clickable element is clicked.
+         * @param {Object} event
+         */
+        onValueClick: function (event) {
+            port.postMessage({
+                action: 'do-console-log-event-listener',
+                data: event.data
+            });
+        }
+    });
 
     // Bootstrap for 'Control inspector' tab
     // ================================================================================
@@ -478,6 +496,8 @@
         'on-control-select': function (message) {
             controlProperties.setData(message.controlProperties);
             controlBindingInfoLeftDataView.setData(message.controlBindings);
+            controlAggregations.setData(message.controlAggregations);
+            controlEvents.setData(message.controlEvents);
 
             if(message.controlBindings){
                 // Set bindings count
