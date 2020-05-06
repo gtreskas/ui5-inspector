@@ -34,10 +34,15 @@ function _getElementForVyper(selectedElement) {
             findElems[index].removeAttribute("data-vyp-finder");   
         }
     }
-    //debugger;
     var element = selectedElement;
-    element.setAttribute("data-vyp-finder", "1");
-    return true;
+    if(!element && $0) {
+        element = $0;
+    }
+    if(element) {
+        element.setAttribute("data-vyp-finder", "1");
+        return true;
+    }
+    return false;
 }
 
 chrome.devtools.panels.create('UI5', '/images/icon-128.png', '/html/panel/ui5/index.html', function (panel) {
@@ -59,15 +64,22 @@ chrome.devtools.panels.elements.createSidebarPane(
         sideBarNonUI5 = sidebar;
         sidebar.setHeight('200px');
         sidebar.setPage('/html/panel/non_ui5/index.html');
+        var getElementForVyper = _getElementForVyper.toString() + '_getElementForVyper($0);';
+        //chrome.devtools.inspectedWindow.reload({"injectedScript": getElementForVyper });
         chrome.devtools.panels.elements.onSelectionChanged.addListener(function () {
-            var getElementForVyper = _getElementForVyper.toString() + '_getElementForVyper($0);';
-            /* JSHINT evil: true */
-            chrome.devtools.inspectedWindow.eval(getElementForVyper, {useContentScriptContext: true}, function (isVypAttrSet) {
-                port.postMessage({
-                    action: 'on-select-element',
-                    isVyperAttrSet: isVypAttrSet
+            // chrome.devtools.inspectedWindow.getResources(function(resources){
+            //     var s = resources;
+            // });
+            //setTimeout(function(){
+                /* JSHINT evil: true */
+                chrome.devtools.inspectedWindow.eval(getElementForVyper, {useContentScriptContext: true}, function (bResult, exceptionInfo) {
+                    port.postMessage({
+                        action: 'on-select-element',
+                        isVyperAttrSet: bResult
+                    });
                 });
-            });
+            //}, 10);
+            
         });
         port.postMessage({
             action: 'do-script-injection',

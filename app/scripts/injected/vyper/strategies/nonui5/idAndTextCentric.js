@@ -321,7 +321,8 @@ var IdAndTextCentricStrategy = function() {
     this.containsText = function(selector, text, contentDocument) {
         var elements = contentDocument.querySelectorAll(selector);
         return Array.prototype.filter.call(elements, function(element){
-          return RegExp(text).test(element.textContent);
+          if(!text || !element.textContent) return false;
+            return element.textContent.indexOf(text) !== -1;
         });
     };
 
