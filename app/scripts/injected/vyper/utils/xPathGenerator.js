@@ -120,7 +120,7 @@ var xPathSelector = {
     }
     let basePath = null;
     if (baseElement)
-        basePath = `.//*[text()="${baseElement.textContent}"]`;
+        basePath = `.//*[text()='${baseElement.textContent}']`;
     return this._findXpath(element, baseElement, basePath, relative);
     },
 
@@ -143,7 +143,7 @@ var xPathSelector = {
     }
     let basePath = null;
     if (baseElement)
-        basePath = `.//*[@${attr}="${baseElement.getAttribute(attr)}"]`;
+        basePath = `.//*[@${attr}='${baseElement.getAttribute(attr)}']`;
     return this._findXpath(element, baseElement, basePath, relative);
     },
 
@@ -197,7 +197,7 @@ var xPathSelector = {
             continue;
         if (name == 'class' && value.includes(' ') && value.length > 32)
             continue;
-        let basePath = `.//*[@${name}="${value}"]`;
+        let basePath = `.//*[@${name}='${value}']`;
         for (let relative of [true, false]) {
             // skip parent element relative paths
             // if (relative == true && currentElement == element.parentNode)
