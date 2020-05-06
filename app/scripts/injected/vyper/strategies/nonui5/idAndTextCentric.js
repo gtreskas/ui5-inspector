@@ -94,30 +94,30 @@ As preferable choose shortest path
  */
 
 var firstDegreeAttributes = [
-    "title",
-    "tooltip",
-    "name",
-    "value",
-    "id",
-    "data-sap-ui",
-    "src",
-    "alt",
-    "aria-labelledby",
-    "aria-describedby",
-    "aria-label",
-    "aria-controls",
-    "aria-colindex",
-    "aria-rowindex"
+    'title',
+    'tooltip',
+    'name',
+    'value',
+    'id',
+    'data-sap-ui',
+    'src',
+    'alt',
+    'aria-labelledby',
+    'aria-describedby',
+    'aria-label',
+    'aria-controls',
+    'aria-colindex',
+    'aria-rowindex'
   ];
 var secondDegreeAttributes = [
-    "type",
-    "action",
-    "for",
-    "data-tl-id",
-    "data-id",
-    "style",
-    "role",
-    "class"
+    'type',
+    'action',
+    'for',
+    'data-tl-id',
+    'data-id',
+    'style',
+    'role',
+    'class'
 ];
 var cssSelectors = require('../../utils/cssSelectorsGen');
 var xPathSelectors = require('../../utils/xPathGenerator');
@@ -282,9 +282,9 @@ var IdAndTextCentricStrategy = function() {
         if(aResSelectors) {
             for (let index = 0; index < aResSelectors.length; index++) {
                 const sSel = aResSelectors[index];
-                let sKey = "iframe " + (index + 1);
-                mResults[sKey] = { "selector": sSel, "action": ""};
-                mResults[sKey]["action"] = "non_ui5.common.locator.switchToIframe";
+                let sKey = 'iframe ' + (index + 1);
+                mResults[sKey] = { "selector": sSel, "action": ''};
+                mResults[sKey]["action"] = 'non_ui5.common.locator.switchToIframe';
             }
         }
         return mResults;
@@ -466,9 +466,9 @@ var IdAndTextCentricStrategy = function() {
                 }
                 let sSel = "";
                 if(i <= aConc.length - 2 && sPart !== sId) {
-                    sSel = sSelector + '[id*="' + sPart + '"]';
+                    sSel = sSelector + "[id*='" + sPart + "']";
                 } else {
-                    sSel = sSelector + '[id="' + sPart + '"]';
+                    sSel = sSelector + "[id='" + sPart + "']";
                 }
                 if(this.distance(sSel, oElem, contentDocument) === 0) {
                     return sSel;
@@ -483,7 +483,10 @@ var IdAndTextCentricStrategy = function() {
         if(oElement.textContent){
             let aAttrs = this.retrieveDomProperties(oElement);
             let oAttr = this.getDomPropertyObject(aAttrs, "nodeName");
-            let sSelector = oAttr["nodeName"];
+            let sSelector = "";
+            if(oAttr){
+                sSelector = oAttr["nodeName"];
+            }
             for (let index = 0; index < aAttrs.length; index++) {
                 const oAttr = aAttrs[index];
                 let key = Object.keys(oAttr)[0];
@@ -497,20 +500,20 @@ var IdAndTextCentricStrategy = function() {
                     if(key === "id") {
                         let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                         if(sIdSel) aSels.push(sIdSel);
-                        sSel = sSel + '[' + key + '="' + val + '"]';
+                        sSel = sSel + "[" + key + "='" + val + "']";
                         if(oElement.textContent !== null && oElement.textContent !== undefined) {
                             let aRes = this.containsText(sSel, oElement.textContent.trim(), contentDocument);
                             if(aRes && aRes.length === 1) {
-                                sSel = sSel + "', '" + oElement.textContent.trim();
+                                sSel = sSel + '", "' + oElement.textContent.trim();
                                 aSels.push(sSel);
                             }
                         }
                     } else {
-                        sSel = sSel + '[' + key + '="' + val + '"]';
+                        sSel = sSel + "[" + key + "='" + val + "']";
                         if(oElement.textContent !== null && oElement.textContent !== undefined) {
                             let aRes = this.containsText(sSel, oElement.textContent.trim(), contentDocument);
                             if(aRes && aRes.length === 1) {
-                                sSel = sSel + "', '" + oElement.textContent.trim();
+                                sSel = sSel + '", "' + oElement.textContent.trim();
                                 aSels.push(sSel);
                             }
                         }
@@ -519,7 +522,7 @@ var IdAndTextCentricStrategy = function() {
                     if(oElement.textContent !== null && oElement.textContent !== undefined) {
                         let aRes = this.containsText(sSelector, oElement.textContent.trim(), contentDocument);
                         if(aRes && aRes.length === 1) {
-                            sSel = sSelector + "', '" + oElement.textContent.trim();
+                            sSel = sSelector + '", "' + oElement.textContent.trim();
                             aSels.push(sSel);
                         }
                     }
@@ -549,7 +552,7 @@ var IdAndTextCentricStrategy = function() {
                     let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                     if(sIdSel)  aSels.push(sIdSel);
                 } else {
-                    sSel = sSel + '[' + key + '="' + val + '"]';
+                    sSel = sSel + "[" + key + "='" + val + "']";
                     if(this.distance(sSel, oElement, contentDocument) === 0) {
                         aSels.push(sSel);
                     }
@@ -588,7 +591,7 @@ var IdAndTextCentricStrategy = function() {
                             sSel = sSelector;
                         }
                     } else {
-                        sSel = sSel + '[' + key + '="' + val + '"]';
+                        sSel = sSel + "[" + key + "='" + val + "']";
                         let dSel = this.distance(sSel, oElement, contentDocument);
                         if(dSel === 0) {
                             aSels.push(sIdSel);
@@ -625,7 +628,7 @@ var IdAndTextCentricStrategy = function() {
             }
             let dist = 999;
             if(key !== "nodeName") {
-                let sSelNew = sSel + '[' + key + '="' + val + '"]';
+                let sSelNew = sSel + "[" + key + "='" + val + "']";
                 if(key === "id") {
                     let sIdSel = this.testId(val, sSelector, oElement, contentDocument);
                     if(sIdSel) {
@@ -760,11 +763,11 @@ var IdAndTextCentricStrategy = function() {
             for (let index = 0; index < aResSelectors.length; index++) {
                 const sSel = aResSelectors[index];
                 let sKey = "alternative css " + (index + 1);
-                mResults[sKey] = { "selector": sSel, "action": ""};
-                if(sSel.indexOf("', '") !== -1) {
-                    mResults[sKey]["action"] = "non_ui5.common.locator.getElementByCssContainingText"; 
+                mResults[sKey] = { "selector": sSel, "action": ''};
+                if(sSel.indexOf('", "') !== -1) {
+                    mResults[sKey]["action"] = 'non_ui5.common.locator.getElementByCssContainingText'; 
                 } else {
-                    mResults[sKey]["action"] = "non_ui5.common.locator.getElementByCss";
+                    mResults[sKey]["action"] = 'non_ui5.common.locator.getElementByCss';
                 }
             }
         }
@@ -777,8 +780,8 @@ var IdAndTextCentricStrategy = function() {
             for (let index = 0; index < aResSelectors.length; index++) {
                 const sSel = aResSelectors[index];
                 let sKey = "alternative xpath " + (index + 1);
-                mResults[sKey] = { "selector": sSel, "action": ""};
-                mResults[sKey]["action"] = "non_ui5.common.locator.getElementByXPath";
+                mResults[sKey] = { "selector": sSel, "action": ''};
+                mResults[sKey]["action"] = 'non_ui5.common.locator.getElementByXPath';
             }
         }
         return mResults;
@@ -821,10 +824,10 @@ var IdAndTextCentricStrategy = function() {
         //Use first degree without id + second degree
         let aFirstDegreeAttrs = [].concat(firstDegreeAttributes);
         let aFilteredWithoutId = aFirstDegreeAttrs.filter(function(value){ 
-            return value !== "aria-labelledby" && 
-            value !== "id" &&
-            value !== "data-sap-ui" && 
-            value !== "aria-describedby";
+            return value !== 'aria-labelledby' && 
+            value !== 'id' &&
+            value !== 'data-sap-ui' && 
+            value !== 'aria-describedby';
         });
         let aSelectorsAttrFirstSecNoId = cssSelectors.getSelectors(oElement, oContentDocument, this.mergeUniqueArrays(aFilteredWithoutId, secondDegreeAttributes));
         // Use all attributes given by element
@@ -843,10 +846,10 @@ var IdAndTextCentricStrategy = function() {
             return !aBlackListed.includes(value);
         });
         aFilteredWithoutId = aAttrsName.filter(function(value){ 
-            return value !== "aria-labelledby" && 
-            value !== "id" &&
-            value !== "data-sap-ui" && 
-            value !== "aria-describedby";
+            return value !== 'aria-labelledby' && 
+            value !== 'id' &&
+            value !== 'data-sap-ui' && 
+            value !== 'aria-describedby';
         });
         let aSelectorsAttrOwnAllNoIdLike = cssSelectors.getSelectors(oElement, oContentDocument, aFilteredWithoutId);
 
@@ -899,7 +902,7 @@ var IdAndTextCentricStrategy = function() {
                     const sKey = oFramesKeys[index];
                     let sSel = mFrameResults[sKey]["selector"];
                     let sActions = mFrameResults[sKey]["action"];
-                    sCodeFrag = sCodeFrag + "await " + sActions + "('" + sSel + "');";
+                    sCodeFrag = sCodeFrag + 'await ' + sActions +'("' + sSel + '");';
                 }
             }
             if(!mSelsActionResults) return "No valid selector could be generated";
@@ -909,42 +912,12 @@ var IdAndTextCentricStrategy = function() {
                     const sKey = oSelsKeys[index];
                     let sSel = mSelsActionResults[sKey]["selector"];
                     let sActions = mSelsActionResults[sKey]["action"];
-                    let sCode = sCodeFrag + "let elem = await " + sActions + "('" + sSel + "');";
+                    let sCode = sCodeFrag + 'let elem = await ' + sActions + '("' + sSel + '");';
                     mOption[sKey]= sCode;
                 }
             }
         }
         return mOption;
-    };
-
-    this.formatStringVals = function() {
-        var a = "[{'column1':'value0','column2':'value1','column3':'value2'}]";
-        var b = a.replace("'", "\"");
-        console.log(b);
-    }
-
-    this.buildElementSelectorsStr = function(mSelsActionResults, mFrameResults) {
-        var sCode = "";
-        if(mFrameResults) {
-            let oFramesKeys = Object.keys(mFrameResults);
-            for (let index = 0; index < oFramesKeys.length; index++) {
-                const sKey = oFramesKeys[index];
-                let sSel = mFrameResults[sKey]["selector"];
-                let sActions = mFrameResults[sKey]["action"];
-                sCode = sCode + "await " + sActions + "(" + sSel + ");";
-            }
-        }
-        if(!mSelsActionResults) return "No valid selector could be generated";
-        if(mSelsActionResults) {
-            let oSelsKeys = Object.keys(mSelsActionResults);
-            for (let index = 0; index < oSelsKeys.length; index++) {
-                const sKey = oSelsKeys[index];
-                let sSel = mSelsActionResults[sKey]["selector"];
-                let sActions = mSelsActionResults[sKey]["action"];
-                sCode = sCode + "await " + sActions + "(" + sSel + ");";
-            }
-        }
-        return sCode;
     };
 };
 window.IdAndTextCentricStrategy = new IdAndTextCentricStrategy();
