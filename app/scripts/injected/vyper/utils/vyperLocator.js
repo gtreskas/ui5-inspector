@@ -655,7 +655,13 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
     for (let index = 0; index < aPropValues.length; index++) {
       const elem = aPropValues[index];
       if (elem && elemId) {
-        const elemLow = elem.toLowerCase();
+        let elemStr = elem;
+        if(typeof elem === "object" && elem.getId) {
+          elemStr = elem.getId();
+        } else {
+          elemStr = "";
+        }
+        const elemLow = elemStr.toLowerCase();
         const elemIdLow = elemId.toLowerCase();
         if (wildCardAndNormalCompare(elemIdLow, elemLow)){
           bPass = true;

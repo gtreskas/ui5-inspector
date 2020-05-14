@@ -398,6 +398,7 @@
                     failedDom.innerText =  "Failed!";
                     successDom.style.display = "none";
                     failedDom.style.display = "block";
+                    vyperSumElems.innerText = "Total number of elements found (without index):" + 0;
                 }
             }
         },
