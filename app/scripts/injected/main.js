@@ -18,14 +18,14 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     var mutation = {
 
         /**
-         * Initialize the observer
+         * Initialize the observer.
          */
         init: function () {
             this._observer.observe(document.body, this._options);
         },
 
         /**
-         * Create an observer instance
+         * Create an observer instance.
          */
         _observer: new MutationObserver(function (mutations) {
             var isMutationValid = true;
@@ -104,7 +104,7 @@ sap.ui.require(['ToolsAPI'], function (ToolsAPI) {
     // Name space for message handler functions.
     var messageHandler = {
         /**
-         * Send massage with the needed initial information for the extension.
+         * Send message with the needed initial information for the extension.
          */
         'get-initial-information': function () {
             var controlTreeModel = ToolsAPI.getRenderedControlTree();
