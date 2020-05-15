@@ -30,7 +30,6 @@ function _prepareMessage(object) {
     var done = [];
     var doneTargets = [];
     var current;
-
     while ((current = todo.pop()) !== undefined) {
         done.push(current.source);
         doneTargets.push(current.target);
@@ -46,7 +45,7 @@ function _prepareMessage(object) {
             var index = done.indexOf(child);
             if (index !== -1) {
                 // Resolve detected circular references by using already parsed/created target
-                current.target[sKey] = doneTargets[index];
+                current.target[sKey] = null;
             } else if (child !== null && typeof child === 'object') {
                 // Deep copy objects by adding them to the to-do list (iterative approach)
                 current.target[sKey] = Array.isArray(child) ? [] : {};
@@ -69,7 +68,7 @@ module.exports = {
     send: function (object) {
         try {
             var message = {
-                detail: _prepareMessage(object)
+                detail: JSON.parse(JSON.stringify(object))
             };
         } catch (error) {
             message = {
@@ -82,7 +81,7 @@ module.exports = {
     sendNonUI5: function(object){
         try {
             var message = {
-                detail: _prepareMessage(object)
+                detail: JSON.parse(JSON.stringify(object))
             };
             
         } catch (error) {
