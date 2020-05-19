@@ -96,21 +96,23 @@ var Evaluator = function() {
 
                     if(aExclTypes) {
                         let aValCand2 = [];
-                        for (let i = 0; i < aBindFiltCand[key].length; i++) {
-                            const oValue = aBindFiltCand[key][i];
-                            const bindType = oValue.type;
-                            let bIsExType = false;
-                            for (let j = 0; j < aExclTypes.length; j++) {
-                                const exType = aExclTypes[j]; 
-                                if(exType && bindType) {
-                                    if(bindType.indexOf(exType) !== -1){
-                                        bIsExType = true;
-                                        break;
+                        if(aBindFiltCand && aBindFiltCand[key]){
+                            for (let i = 0; i < aBindFiltCand[key].length; i++) {
+                                const oValue = aBindFiltCand[key][i];
+                                const bindType = oValue.type;
+                                let bIsExType = false;
+                                for (let j = 0; j < aExclTypes.length; j++) {
+                                    const exType = aExclTypes[j]; 
+                                    if(exType && bindType) {
+                                        if(bindType.indexOf(exType) !== -1){
+                                            bIsExType = true;
+                                            break;
+                                        }
                                     }
                                 }
-                            }
-                            if(!bIsExType) {
-                                aValCand2.push(oValue);
+                                if(!bIsExType) {
+                                    aValCand2.push(oValue);
+                                }
                             }
                         }
                         if(aValCand2.length > 0) {
