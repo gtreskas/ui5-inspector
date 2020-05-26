@@ -594,7 +594,7 @@ var IdAndTextCentricStrategy = function() {
                         sSel = sSel + "[" + key + "='" + val + "']";
                         let dSel = this.distance(sSel, oElement, contentDocument);
                         if(dSel === 0) {
-                            aSels.push(sIdSel);
+                            aSels.push(dSel);
                             sSel = sSelector;
                             continue;
                         }
