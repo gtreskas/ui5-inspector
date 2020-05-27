@@ -3,13 +3,17 @@
 
 // check that selector is unique and matches the given html element
 function testSelector(element, selector, contentDocument) {
-    var check = contentDocument.querySelectorAll(selector);
-  
-    if(check.length && check.length === 1 && check[0] === element) {
-      return true;
+    try {
+        var check = contentDocument.querySelectorAll(selector);
+      
+        if(check.length && check.length === 1 && check[0] === element) {
+          return true;
+        }
+      
+        return false;
+    } catch (error) {
+        return false;
     }
-  
-    return false;
   }
   
   // check if element is an anchor tag and generate a unique selector for that case
