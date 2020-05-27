@@ -319,42 +319,52 @@ var IdAndTextCentricStrategy = function() {
     };
 
     this.containsText = function(selector, text, contentDocument) {
-        var elements = contentDocument.querySelectorAll(selector);
-        return Array.prototype.filter.call(elements, function(element){
-          if(!text || !element.textContent) return false;
-            return element.textContent.indexOf(text) !== -1;
-        });
+        try {
+            var elements = contentDocument.querySelectorAll(selector);
+            return Array.prototype.filter.call(elements, function(element){
+            if(!text || !element.textContent) return false;
+                return element.textContent.indexOf(text) !== -1;
+            });
+        } catch (error) {
+            // Return empty
+            return [];
+        }
     };
 
     this.distance = function(sSelector, oElem, contentDocument, isXpath) {
         var aElms = [];
         if(sSelector){
-            if(isXpath) {
-                let xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-                let oElem = xPathRes.iterateNext(); 
-                if(!oElem) {
-                    return 99;
-                } 
-                let count = 1;
-                while (oElem) {
-                    oElem = iterator.iterateNext();
-                    count++;
-                } 
-                if(count === 1){
-                    if(this.testXPathSelectors(sSelector, oElem, contentDocument)){
-                        return 0;
+            try {
+                if(isXpath) {
+                    let xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+                    let oElem = xPathRes.iterateNext(); 
+                    if(!oElem) {
+                        return 99;
+                    } 
+                    let count = 1;
+                    while (oElem) {
+                        oElem = iterator.iterateNext();
+                        count++;
+                    } 
+                    if(count === 1){
+                        if(this.testXPathSelectors(sSelector, oElem, contentDocument)){
+                            return 0;
+                        }
                     }
-                }
-                return count + 1;
-            } else {
-                aElms = contentDocument.querySelectorAll(sSelector);
-                if(aElms.length === 0) return  99;
-                if(aElms.length === 1) {
-                    if(this.testCssSelectors(sSelector, oElem, contentDocument)){
-                        return 0;
+                    return count + 1;
+                } else {
+                    aElms = contentDocument.querySelectorAll(sSelector);
+                    if(aElms.length === 0) return  99;
+                    if(aElms.length === 1) {
+                        if(this.testCssSelectors(sSelector, oElem, contentDocument)){
+                            return 0;
+                        }
                     }
-                }
-                return aElms.length + 1;
+                    return aElms.length + 1;
+                }   
+            } catch (error) {
+                // Invalid selector just ignore
+                return 999;
             }
         }
         return 999;
@@ -362,14 +372,18 @@ var IdAndTextCentricStrategy = function() {
 
     this.testCssSelectors= function(sSelector, oElement, contentDocument) {
         if(sSelector && oElement){
-            if(contentDocument.querySelectorAll(sSelector).length > 1 ||
-            contentDocument.querySelectorAll(sSelector).length === 0) {
-                return null;
-            }
-            let oElem = contentDocument.querySelector(sSelector);
-            if(oElement.isEqualNode(oElem) &&
-                oElement.isSameNode(oElem)){
-                    return oElem;
+            try {
+                if(contentDocument.querySelectorAll(sSelector).length > 1 ||
+                contentDocument.querySelectorAll(sSelector).length === 0) {
+                    return null;
+                }
+                let oElem = contentDocument.querySelector(sSelector);
+                if(oElement.isEqualNode(oElem) &&
+                    oElement.isSameNode(oElem)){
+                        return oElem;
+                } 
+            } catch (error) {
+               return null; 
             }
         }
         return null;
@@ -377,20 +391,24 @@ var IdAndTextCentricStrategy = function() {
 
     this.testXPathSelectors = function(sXpathSelector, oElement, contentDocument) {
         if(sXpathSelector && oElement){
-            var xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-            var oElem = xPathRes.iterateNext();
-            if(!oElem) {
-                //Retry
-                xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
-                oElem = xPathRes.iterateNext();
-            } 
-            var nextElm = xPathRes.iterateNext();
-            if(!oElem || nextElm) {
-                return null;
-            } 
-            if(oElement.isEqualNode(oElem) &&
-                oElement.isSameNode(oElem)){
-                    return oElem;
+            try {
+                var xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+                var oElem = xPathRes.iterateNext();
+                if(!oElem) {
+                    //Retry
+                    xPathRes = contentDocument.evaluate(sXpathSelector, contentDocument, null, XPathResult.ORDERED_NODE_ITERATOR_TYPE, null);
+                    oElem = xPathRes.iterateNext();
+                } 
+                var nextElm = xPathRes.iterateNext();
+                if(!oElem || nextElm) {
+                    return null;
+                } 
+                if(oElement.isEqualNode(oElem) &&
+                    oElement.isSameNode(oElem)){
+                        return oElem;
+                }
+            } catch (error) {
+                return null; 
             }
         }
         return null;
