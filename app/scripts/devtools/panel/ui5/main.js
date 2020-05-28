@@ -271,7 +271,7 @@
                 }
                 
                 let sValEnter = "";
-                if(vyperAction.value !== "click" && vyperAction.value !== "no action" && strVal.indexOf("valueToEnter") !== -1 && strVal.split("valueToEnter").length > 2){
+                if(vyperAction.value !== "click" && vyperAction.value !== "no action" && vyperAction.value !== "clear" && strVal.indexOf("valueToEnter") !== -1 && strVal.split("valueToEnter").length > 2){
                     // Get value
                     sValEnter = strVal.substring(strVal.indexOf("valueToEnter"));
                     sValEnter = sValEnter.substring(sValEnter.indexOf('"') + 1, sValEnter.indexOf('";'))
@@ -307,7 +307,7 @@
         } 
         var sSelector = JSON.stringify(currSel);
         var strSel = 'const selector = ' + sSelector + ';';
-        if(vyperAction.value !== "click" && vyperAction.value !== "no action") {
+        if(vyperAction.value !== "click" && vyperAction.value !== "no action" && vyperAction.value !== "clear") {
             strSel = strSel + 'const valueToEnter = "myValue";';
         }
         if(idx !== null && idx !== undefined) {
@@ -316,7 +316,7 @@
 
         if(vyperAction.value) {
             strSel = strSel +  'await ' + ReuseDictionary[vyperAction.value] + '(selector';
-            if(vyperAction.value !== "click" && vyperAction.value !== "no action") {
+            if(vyperAction.value !== "click" && vyperAction.value !== "no action" && vyperAction.value !== "clear") {
                 strSel = strSel + ', valueToEnter'; 
             }
             if(idx !== null && idx !== undefined) {
