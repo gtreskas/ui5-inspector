@@ -659,7 +659,7 @@ module.exports = function(ui5Selector, index, opt_parentElement) {
         if(typeof elem === "object" && elem.getId) {
           elemStr = elem.getId();
         } else {
-          elemStr = "";
+          elemStr = elem;
         }
         const elemLow = elemStr.toLowerCase();
         const elemIdLow = elemId.toLowerCase();
