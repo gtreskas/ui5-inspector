@@ -156,7 +156,7 @@ module.exports = {
          var message = {
             detail: messageParser.parse(object)
         };
-        // Have to check if smartlink works or not
+        // SmartLink bug is fixed
         /*try {
             var message = {
                 detail: JSON.parse(JSON.stringify(object))
