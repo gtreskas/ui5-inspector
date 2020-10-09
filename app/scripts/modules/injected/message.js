@@ -1,5 +1,23 @@
 'use strict';
 
+//Fallback if circular ref is detected
+function simpleStringify(object){
+    var simpleObject = {};
+    for (var prop in object ){
+        if (!object.hasOwnProperty(prop)){
+            continue;
+        }
+        if (typeof(object[prop]) == 'object'){
+            continue;
+        }
+        if (typeof(object[prop]) == 'function'){
+            continue;
+        }
+        simpleObject[prop] = object[prop];
+    }
+    return JSON.stringify(simpleObject); // returns cleaned up JSON
+};
+
 /**
  * Creates a parser that simplifies complex objects by removing non-serializable functions and complex instances.
  * @constructor
